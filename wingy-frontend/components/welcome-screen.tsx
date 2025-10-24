@@ -1,6 +1,7 @@
 "use client"
 
-import { Gamepad2, Zap, BookOpen, Lightbulb } from "lucide-react"
+import Image from "next/image"
+import { Zap, BookOpen, Lightbulb } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 
@@ -27,7 +28,14 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
             {/* Logo and title */}
             <div className="text-center mb-12">
               <div className="inline-block mb-6 p-4 bg-primary/20 rounded-lg glow-accent">
-                <Gamepad2 className="w-12 h-12 text-primary" />
+                <Image
+                  src="/wingy-logo-transparent.png"
+                  alt="Wingy Logo"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12"
+                  loading="eager"
+                />
               </div>
               <h1 className="text-6xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4 leading-tight">
                 Wingy

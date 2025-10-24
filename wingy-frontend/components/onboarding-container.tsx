@@ -5,7 +5,7 @@ import { GameSelection } from "./game-selection"
 import { PreferencesScreen } from "./preferences-screen"
 import { ProgressIndicator } from "./progress-indicator"
 import { useGameContext } from "@/contexts/game-context"
-import type { Game } from "@/types"
+import type { Game, PreferenceType } from "@/types"
 
 interface OnboardingContainerProps {
   onComplete: () => void
@@ -16,11 +16,10 @@ export function OnboardingContainer({ onComplete }: OnboardingContainerProps) {
 
   const handleGameSelection = (games: Game[]) => {
     setSelectedGames(games)
-    setCurrentStep(3)
   }
 
-  const handlePreferenceSelect = (pref: string | null) => {
-    setPreference(pref as any)
+  const handlePreferenceSelect = (prefs: PreferenceType[]) => {
+    setPreference(prefs)
   }
 
   const handleComplete = () => {

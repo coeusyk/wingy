@@ -1,22 +1,23 @@
 [project]
-name = "wingy"
+name = "wingy-backend"
 version = "0.1.0"
 description = "An intelligent game helper and learning assistant powered by OpenAI's Agents SDK"
 requires-python = ">=3.11"
 dependencies = [
-    "openai-agents>=0.4.0",
+    "openai-agents>=0.4.1",
     "python-dotenv>=1.1.1",
     "httpx>=0.27.0",
-    "fastapi>=0.115.0",
+    "fastapi>=0.120.0",
     "uvicorn[standard]>=0.30.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "hatchling>=1.27.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
-    "black>=24.0.0",
-    "ruff>=0.3.0",
 ]
 
 [tool.black]

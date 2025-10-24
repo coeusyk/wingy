@@ -1,7 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
 
-import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import {
   Manrope as V0_Font_Manrope,
@@ -22,9 +21,18 @@ const _sourceSerif_4 = V0_Font_Source_Serif_4({
 })
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "Wingy - AI Gaming Assistant",
+  description: "Your intelligent guide to gaming excellence. Get personalized strategies, tips, tutorials, and advice powered by AI.",
+  generator: "wingy",
+  icons: {
+    icon: [
+      {
+        url: "/wingy-logo-transparent.png",
+        type: "image/png",
+      },
+    ],
+    apple: "/wingy-logo-transparent.png",
+  },
 }
 
 export default function RootLayout({
@@ -34,10 +42,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
+      <head>
+        <link rel="icon" href="/wingy-logo-transparent.png" type="image/png" sizes="any" />
+        <link rel="apple-touch-icon" href="/wingy-logo-transparent.png" />
+      </head>
+      <body className={`font-sans antialiased w-screen h-screen overflow-hidden`}>
         <GameProvider>
           {children}
-          <Analytics />
         </GameProvider>
       </body>
     </html>

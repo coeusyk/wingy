@@ -10,7 +10,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [currentStep, setCurrentStep] = useState(1)
-  const [preference, setPreference] = useState<PreferenceType>(null)
+  const [preference, setPreference] = useState<PreferenceType[]>([])
 
   return (
     <GameContext.Provider

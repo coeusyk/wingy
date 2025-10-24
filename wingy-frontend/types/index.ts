@@ -2,6 +2,7 @@ export interface Game {
   id: string
   name: string
   category: string
+  abbr: string
 }
 
 export interface Message {
@@ -12,7 +13,7 @@ export interface Message {
   isNew?: boolean
 }
 
-export type PreferenceType = "competitive" | "learning" | "general" | null
+export type PreferenceType = "competitive" | "learning" | "general" | "improvement" | "strategy" | "entertainment"
 
 export interface GameContextType {
   selectedGames: Game[]
@@ -23,6 +24,6 @@ export interface GameContextType {
   setMessages: (messages: Message[]) => void
   currentStep: number
   setCurrentStep: (step: number) => void
-  preference: PreferenceType
-  setPreference: (preference: PreferenceType) => void
+  preference: PreferenceType[]
+  setPreference: (preference: PreferenceType[]) => void
 }

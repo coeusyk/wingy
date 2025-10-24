@@ -1,25 +1,19 @@
 """Game catalog API routes."""
 
+from typing import List
 from fastapi import APIRouter, Query
+from pydantic import BaseModel
 
-from wingy.games.game_catalog import get_popular_games, get_all_games, search_games
+from wingy.games.game_catalog import get_all_games, search_games
+from wingy.games.db_manager import get_db
 
 
 router = APIRouter(prefix="/games", tags=["games"])
 
 
-@router.get("/popular")
-async def get_popular():
-    """Get list of popular games.
-    
-    Returns:
-        Dictionary containing list of popular games and count
-    """
-    games = get_popular_games()
-    return {
-        "games": games,
-        "count": len(games)
-    }
+class SuggestedQuestionsRequest(BaseModel):
+    """Request model for suggested questions."""
+    game_ids: List[str]
 
 
 @router.get("/all")
@@ -53,3 +47,20 @@ async def search(q: str = Query(..., min_length=1, description="Search query")):
         "query": q
     }
 
+
+@router.post("/suggested-questions")
+async def get_suggested_questions(request: SuggestedQuestionsRequest):
+    """Get suggested questions for selected games.
+    
+    Args:
+        request: Contains list of game IDs
+        
+    Returns:
+        Dictionary containing suggested questions for the selected games
+    """
+    db = get_db()
+    questions = db.get_suggested_questions(request.game_ids)
+    return {
+        "questions": questions,
+        "count": len(questions)
+    }

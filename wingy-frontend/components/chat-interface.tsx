@@ -6,31 +6,48 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Send, Sparkles, Copy, Check, User, Lightbulb } from "lucide-react"
 import { useGameContext } from "@/contexts/game-context"
+import { sendChatMessage, getSuggestedQuestions, type SuggestedQuestion } from "@/lib/api"
 import type { Message } from "@/types"
-
-const SAMPLE_RESPONSES = [
-  "That's a great question! Based on your game preferences, here's what I recommend...",
-  "I can help you with that! Let me share some pro tips for your favorite games.",
-  "Interesting! Here are some strategies that work well in competitive play.",
-  "Great choice! Here's what top players are doing right now.",
-  "I've got some insights that might help you improve your gameplay.",
-]
+import { MarkdownMessage } from "./markdown-message"
 
 const QUICK_ACTIONS = ["Ask for tips", "Game mechanics", "Strategy help"]
 
-const SUGGESTED_QUESTIONS = [
-  "How do I improve my aim in Valorant?",
-  "What's the best starter build in Elden Ring?",
-  "Teach me redstone basics in Minecraft",
-]
-
 export function ChatInterface() {
-  const { selectedGames, messages, setMessages } = useGameContext()
+  const { selectedGames, preference, sessionId, setSessionId, messages, setMessages } = useGameContext()
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Generate session ID if not exists
+  useEffect(() => {
+    if (!sessionId) {
+      const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      setSessionId(newSessionId)
+    }
+  }, [sessionId, setSessionId])
+
+  // Fetch suggested questions when games are selected
+  useEffect(() => {
+    const fetchSuggestedQuestions = async () => {
+      if (selectedGames.length > 0) {
+        try {
+          const gameIds = selectedGames.map((g) => g.id)
+          const questions = await getSuggestedQuestions(gameIds)
+          // Limit to top 3 questions
+          setSuggestedQuestions(questions.slice(0, 3))
+        } catch (err) {
+          console.error("[v0] Error fetching suggested questions:", err)
+          // Fallback to empty array if fetch fails
+          setSuggestedQuestions([])
+        }
+      }
+    }
+
+    fetchSuggestedQuestions()
+  }, [selectedGames])
 
   // Initialize welcome message on mount
   useEffect(() => {
@@ -54,7 +71,7 @@ export function ChatInterface() {
   }, [messages])
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return
+    if (!inputValue.trim() || !sessionId) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -66,18 +83,45 @@ export function ChatInterface() {
     setMessages([...messages, userMessage])
     setInputValue("")
     setIsLoading(true)
+    setError(null)
 
-    setTimeout(() => {
+    try {
+      // Prepare request
+      const request = {
+        message: inputValue,
+        session_id: sessionId,
+        games: selectedGames.map((g) => g.name),
+        preferences: preference,
+      }
+
+      // Send to API
+      const response = await sendChatMessage(request)
+
+      // Add agent response
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: SAMPLE_RESPONSES[Math.floor(Math.random() * SAMPLE_RESPONSES.length)],
+        content: response.message,
         sender: "agent",
         timestamp: new Date(),
         isNew: true,
       }
       setMessages([...messages, userMessage, agentMessage])
+    } catch (err) {
+      console.error("[v0] Error sending message:", err)
+      setError(err instanceof Error ? err.message : "Failed to send message")
+      
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Sorry, I encountered an error processing your message. Please try again.",
+        sender: "agent",
+        timestamp: new Date(),
+        isNew: true,
+      }
+      setMessages([...messages, userMessage, errorMessage])
+    } finally {
       setIsLoading(false)
-    }, 800)
+    }
   }
 
   const handleQuickAction = (action: string) => {
@@ -111,10 +155,12 @@ export function ChatInterface() {
           <div
             key={message.id}
             className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"} slide-up`}
-            onMouseEnter={() => setHoveredMessageId(message.id)}
-            onMouseLeave={() => setHoveredMessageId(null)}
           >
-            <div className="flex gap-2 items-end max-w-xs md:max-w-md lg:max-w-lg">
+            <div className={`flex gap-2 items-end ${
+              message.sender === "user" 
+                ? "max-w-[80%] sm:max-w-[80%] ml-auto mr-4 sm:mr-6" 
+                : "max-w-[80%] sm:max-w-[80%] mr-auto ml-4 sm:ml-6"
+            }`}>
               {message.sender === "agent" && (
                 <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-3 h-3 text-primary" />
@@ -124,33 +170,30 @@ export function ChatInterface() {
               <div
                 className={`px-4 py-3 rounded-lg relative group ${
                   message.sender === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-none glow-accent"
+                    ? "bg-primary text-primary-foreground rounded-br-none"
                     : "bg-card border border-border/50 text-foreground rounded-bl-none hover:border-primary/30 transition-colors"
                 }`}
               >
-                <p className="text-sm md:text-base leading-relaxed">{message.content}</p>
+                {message.sender === "agent" ? (
+                  <MarkdownMessage content={message.content} />
+                ) : (
+                  <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                )}
 
-                <div className="flex items-center justify-between gap-2 mt-2">
-                  <span className="text-xs opacity-70">
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                  {message.sender === "agent" && hoveredMessageId === message.id && (
-                    <button
-                      onClick={() => handleCopyMessage(message.content, message.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-primary/20 rounded"
-                      aria-label="Copy message"
-                    >
-                      {copiedId === message.id ? (
-                        <Check className="w-3 h-3 text-green-500" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </button>
-                  )}
-                </div>
+                {/* Copy button - always in DOM, hidden with opacity */}
+                {message.sender === "agent" && (
+                  <button
+                    onClick={() => handleCopyMessage(message.content, message.id)}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity p-1 hover:bg-primary/20 rounded will-change-opacity"
+                    aria-label="Copy message"
+                  >
+                    {copiedId === message.id ? (
+                      <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
 
                 {message.isNew && message.sender === "agent" && (
                   <div className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold px-2 py-1 rounded-full">
@@ -174,17 +217,34 @@ export function ChatInterface() {
               <Lightbulb className="w-5 h-5 text-accent" />
               <p className="text-muted-foreground font-medium">Suggested questions:</p>
             </div>
-            <div className="grid gap-3">
-              {SUGGESTED_QUESTIONS.map((question) => (
-                <button
-                  key={question}
-                  onClick={() => handleSuggestedQuestion(question)}
-                  className="p-3 rounded-lg bg-card border border-border/50 hover:border-primary/50 hover:bg-card/80 transition-all text-left text-sm text-foreground hover:text-primary"
-                  aria-label={`Ask: ${question}`}
-                >
-                  {question}
-                </button>
-              ))}
+            <div className="grid gap-1">
+              {suggestedQuestions.length > 0 ? (
+                suggestedQuestions.map((q) => {
+                  // Find the game that this question belongs to
+                  const game = selectedGames.find((g) => g.id === q.game_id)
+                  
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => handleSuggestedQuestion(q.question)}
+                      className="flex items-center justify-between gap-3 p-3 rounded-lg bg-card border border-border/50 hover:border-primary/50 hover:bg-card/80 transition-all text-left text-sm text-foreground hover:text-primary"
+                      aria-label={`Ask: ${q.question}`}
+                    >
+                      <span className="flex-1">{q.question}</span>
+                      {game && (
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full bg-primary/30 border border-primary/50 flex-shrink-0"
+                          title={game.name}
+                        >
+                          {game.abbr}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })
+              ) : (
+                <p className="text-muted-foreground text-sm">Select games to see personalized questions</p>
+              )}
             </div>
 
             <div className="flex items-center gap-2 mb-2">
@@ -196,7 +256,7 @@ export function ChatInterface() {
                 <button
                   key={action}
                   onClick={() => handleQuickAction(action)}
-                  className="px-3 py-2 rounded-full bg-primary/20 text-primary border border-primary/30 hover:border-primary/60 hover:bg-primary/30 transition-all text-sm font-medium"
+                  className="px-4 py-2 rounded-lg bg-primary/20 text-primary border border-primary/30 hover:border-primary/60 hover:bg-primary/30 transition-all text-sm font-medium"
                   aria-label={`Quick action: ${action}`}
                 >
                   {action}
@@ -235,14 +295,14 @@ export function ChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-border/50 bg-card/50 backdrop-blur-sm p-4 md:p-6">
+      <div className="border-t-2 border-primary/30 bg-card/80 backdrop-blur-sm p-4 md:p-6 shadow-lg">
         <div className="flex gap-3">
           <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask me about gaming strategies..."
-            className="flex-1 bg-input border border-border/50 rounded-lg px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none max-h-24"
+            className="flex-1 bg-input border-2 border-primary/40 rounded-lg px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none max-h-24 shadow-sm hover:border-primary/60"
             rows={1}
             aria-label="Message input"
           />

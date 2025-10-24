@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { GameCard } from "./game-card"
 import { GameGridSkeleton } from "@/components/loading-skeleton"
 import { ErrorMessage } from "@/components/error-message"
-import { fetchPopularGames, fetchAllGames, searchGames } from "@/lib/api"
+import { fetchAllGames, searchGames } from "@/lib/api"
 import type { Game } from "@/types"
 
 interface GameSelectorProps {
@@ -16,7 +16,6 @@ interface GameSelectorProps {
 export function GameSelector({ onGameSelection }: GameSelectorProps) {
   const [selectedGames, setSelectedGames] = useState<Game[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState<"popular" | "all">("popular")
   const [games, setGames] = useState<Game[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
@@ -29,10 +28,10 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
       setIsLoading(true)
       setError(null)
       try {
-        const data = activeTab === "popular" ? await fetchPopularGames() : await fetchAllGames()
+        const data = await fetchAllGames()
         setGames(data)
       } catch (err) {
-        setError(`Failed to load ${activeTab} games. Please try again.`)
+        setError("Failed to load games. Please try again.")
         console.error("[v0] Error loading games:", err)
       } finally {
         setIsLoading(false)
@@ -40,7 +39,7 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
     }
 
     loadGames()
-  }, [activeTab])
+  }, [])
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -49,10 +48,10 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
         setIsLoading(true)
         setError(null)
         try {
-          const data = activeTab === "popular" ? await fetchPopularGames() : await fetchAllGames()
+          const data = await fetchAllGames()
           setGames(data)
         } catch (err) {
-          setError(`Failed to load ${activeTab} games. Please try again.`)
+          setError("Failed to load games. Please try again.")
           console.error("[v0] Error loading games:", err)
         } finally {
           setIsLoading(false)
@@ -77,7 +76,7 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [searchQuery, activeTab])
+  }, [searchQuery])
 
   const toggleGame = useCallback((game: Game) => {
     setSelectedGames((prev) =>
@@ -91,6 +90,7 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
         id: `custom-${Date.now()}`,
         name: customGameInput,
         category: "custom",
+        abbr: customGameInput,
       }
       setSelectedGames((prev) => [...prev, customGame])
       setCustomGameInput("")
@@ -106,8 +106,7 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
 
   const handleRetry = () => {
     setError(null)
-    setActiveTab(activeTab === "popular" ? "all" : "popular")
-    setActiveTab(activeTab)
+    window.location.reload()
   }
 
   const filteredGames = searchQuery.trim() ? games : games
@@ -135,36 +134,6 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
           </button>
         )}
       </div>
-
-      {/* Tabs */}
-      {!searchQuery && (
-        <div className="flex gap-2 border-b border-border/50">
-          <button
-            onClick={() => setActiveTab("popular")}
-            className={`px-4 py-2 font-medium transition-all border-b-2 ${
-              activeTab === "popular"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-            aria-selected={activeTab === "popular"}
-            role="tab"
-          >
-            Popular
-          </button>
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`px-4 py-2 font-medium transition-all border-b-2 ${
-              activeTab === "all"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-            aria-selected={activeTab === "all"}
-            role="tab"
-          >
-            All Games
-          </button>
-        </div>
-      )}
 
       {/* Game Selection */}
       <div>

@@ -1,15 +1,9 @@
-"""Session management for Wingy.""""""Session management for conversation context and user profiles."""
+"""Session management for conversation context and user profiles."""
 
+from .manager import SessionManager
+from .models import UserProfile, SessionContext, SkillLevel
 
-
-from .manager import SessionManagerfrom .manager import SessionManager
-
-from .models import UserProfile, GamePreferencefrom .models import UserProfile, SessionContext, SkillLevel
-
-
-
-__all__ = ["SessionManager", "UserProfile", "GamePreference"]__all__ = [
-
+__all__ = [
     "SessionManager",
     "UserProfile",
     "SessionContext",

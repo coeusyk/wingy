@@ -9,15 +9,15 @@ Write-Host ("=" * 59)
 Write-Host ""
 
 # Check if backend directory exists
-if (-not (Test-Path "backend")) {
-    Write-Host "❌ Error: backend directory not found" -ForegroundColor Red
+if (-not (Test-Path "wingy-backend")) {
+    Write-Host "❌ Error: wingy-backend directory not found" -ForegroundColor Red
     Write-Host "   Run this script from the wingy project root directory"
     exit 1
 }
 
 # Check if frontend directory exists
-if (-not (Test-Path "frontend")) {
-    Write-Host "❌ Error: frontend directory not found" -ForegroundColor Red
+if (-not (Test-Path "wingy-frontend")) {
+    Writewingy--Host "❌ Error: wingy-frontend directory not fwingy-ound" -ForegroundColor Red
     Write-Host "   Run this script from the wingy project root directory"
     exit 1
 }
@@ -49,22 +49,20 @@ Write-Host ""
 Write-Host "Backend will run on:  http://localhost:8000" -ForegroundColor Cyan
 Write-Host "Frontend will run on: http://localhost:3000" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Press CTRL+C to stop both servers" -ForegroundColor Yellow
+Write-Host "Press CTRL+C to stop both servers" -ForegroundColwingy-or Yellow
 Write-Host ""
 
 # Start backend in background
 Write-Host "▶  Starting backend server..." -ForegroundColor Green
 $backendJob = Start-Job -ScriptBlock {
-    Set-Location $using:PWD\backend
+    Set-Location $using:PWD\wingy-backend
     python run_api.py
 }
-
-Start-Sleep -Seconds 3
 
 # Start frontend in background  
 Write-Host "▶  Starting frontend server..." -ForegroundColor Green
 $frontendJob = Start-Job -ScriptBlock {
-    Set-Location $using:PWD\frontend
+    Set-Location $using:PWD\wingy-frontend
     npm run dev
 }
 

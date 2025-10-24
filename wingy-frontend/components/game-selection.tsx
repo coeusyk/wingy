@@ -81,6 +81,7 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
         id: `custom-${Date.now()}`,
         name: customGameInput,
         category: "custom",
+        abbr: customGameInput.substring(0, 3).toUpperCase(),
       }
       onGameSelect([...selectedGames, customGame])
       setCustomGameInput("")
@@ -92,12 +93,8 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
     onGameSelect(selectedGames.filter((g) => g.id !== gameId))
   }
 
-  // Separate popular games (first 12) from others
-  const popularGames = games.slice(0, 12)
-  const otherGames = games.slice(12)
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-card relative overflow-hidden">
+    <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-background via-background to-card overflow-hidden flex items-center justify-center p-4">
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl float" />
@@ -107,7 +104,7 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
         />
       </div>
 
-      <Card className="w-full max-w-5xl border-border/50 bg-card/80 backdrop-blur-sm slide-up relative z-10">
+      <Card className="w-full max-w-5xl border-border/50 bg-card/80 backdrop-blur-sm slide-up relative z-10 mx-auto">
         <div className="p-8 md:p-12">
           {/* Header */}
           <div className="mb-8">
@@ -143,27 +140,8 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
           {/* Games grid */}
           {!isLoading && !error && (
             <>
-              {/* Popular games section */}
-              {!searchQuery && popularGames.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">
-                    Popular Games
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                    {popularGames.map((game) => (
-                      <GameCard
-                        key={game.id}
-                        game={game}
-                        isSelected={selectedGames.some((g) => g.id === game.id)}
-                        onClick={() => handleGameToggle(game)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* All games or search results */}
-              {(searchQuery || otherGames.length > 0) && (
+              {(searchQuery || games.length > 0) && (
                 <div className="mb-8">
                   {searchQuery && (
                     <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">
@@ -193,7 +171,7 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
               {!showCustomInput && (
                 <Button
                   variant="outline"
-                  className="w-full mb-8 border-dashed bg-transparent"
+                  className="w-full mb-8 border-dashed bg-transparent hover:text-destructive hover:border-destructive transition-colors"
                   onClick={() => setShowCustomInput(true)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -229,38 +207,12 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
                   </Button>
                 </div>
               )}
-
-              {/* Selected games display */}
-              {selectedGames.length > 0 && (
-                <div className="mb-8 p-4 bg-primary/10 rounded-lg border border-primary/20">
-                  <p className="text-sm font-semibold mb-3">
-                    {selectedGames.length} game{selectedGames.length !== 1 ? "s" : ""} selected
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedGames.map((game) => (
-                      <div
-                        key={game.id}
-                        className="flex items-center gap-2 bg-primary/20 px-3 py-1 rounded-full text-sm"
-                      >
-                        <span>{game.name}</span>
-                        <button
-                          onClick={() => handleRemoveGame(game.id)}
-                          className="hover:text-destructive transition-colors"
-                          aria-label={`Remove ${game.name}`}
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </>
           )}
 
           {/* Bottom actions */}
           <div className="flex gap-4 pt-8 border-t border-border/50">
-            <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent">
+            <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent hover:text-destructive hover:border-destructive transition-colors">
               Back
             </Button>
             <Button

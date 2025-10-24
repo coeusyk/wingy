@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { X, Gamepad2, Settings, Trash2, Download } from "lucide-react"
+import { X, Settings, Trash2, Download } from "lucide-react"
 import { useGameContext } from "@/contexts/game-context"
 import { GameSelector } from "@/components/game-selector"
 import type { Game } from "@/types"
@@ -45,8 +46,15 @@ export function Header({ onResetPreferences }: HeaderProps) {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/20 rounded-lg glow-accent">
-              <Gamepad2 className="w-5 h-5 text-primary" />
+            <div className="p-2 bg-primary/20 rounded-lg">
+              <Image
+                src="/wingy-logo-transparent.png"
+                alt="Wingy Logo"
+                width={24}
+                height={24}
+                className="w-6 h-6"
+                loading="eager"
+              />
             </div>
             <div className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Wingy

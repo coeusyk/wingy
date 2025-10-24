@@ -27,6 +27,13 @@ tips_agent = Agent(
     5. Provide context for WHEN to apply each tip
     6. Mention difficulty level (beginner/intermediate/advanced)
     
+    **Adapt based on user preferences (if provided in context):**
+    - **competitive**: Focus on tips that give competitive edge and win rates
+    - **improvement**: Structure tips as progressive skill-building exercises
+    - **learning**: Explain the theory behind why each tip works
+    - **entertainment**: Make tips fun and engaging with examples/stories
+    - **general**: Balanced mix of tips for all situations
+    
     Always be efficient, practical, and focused on quick wins and immediate improvements.
     """,
     tools=[web_search_tool],

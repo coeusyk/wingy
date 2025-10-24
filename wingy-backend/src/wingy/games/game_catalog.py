@@ -1,20 +1,32 @@
 """Comprehensive game catalog for Wingy."""
 
 from typing import List, Dict
+from .db_manager import get_db
 
+# Legacy catalog kept for reference
 GAME_CATALOG = {
-    "popular": [
+    "fps": [
         {"id": "valorant", "name": "Valorant", "category": "FPS"},
-        {"id": "league-of-legends", "name": "League of Legends", "category": "MOBA"},
-        {"id": "minecraft", "name": "Minecraft", "category": "Sandbox"},
-        {"id": "fortnite", "name": "Fortnite", "category": "Battle Royale"},
         {"id": "cs2", "name": "Counter-Strike 2", "category": "FPS"},
-        {"id": "dota2", "name": "Dota 2", "category": "MOBA"},
-        {"id": "apex-legends", "name": "Apex Legends", "category": "Battle Royale"},
         {"id": "overwatch2", "name": "Overwatch 2", "category": "FPS"},
-        {"id": "gta5", "name": "GTA V", "category": "Action"},
-        {"id": "rocket-league", "name": "Rocket League", "category": "Sports"},
+    ],
+    "moba": [
+        {"id": "league-of-legends", "name": "League of Legends", "category": "MOBA"},
+        {"id": "dota2", "name": "Dota 2", "category": "MOBA"},
+    ],
+    "battle_royale": [
+        {"id": "fortnite", "name": "Fortnite", "category": "Battle Royale"},
+        {"id": "apex-legends", "name": "Apex Legends", "category": "Battle Royale"},
         {"id": "cod-warzone", "name": "Call of Duty: Warzone", "category": "Battle Royale"},
+    ],
+    "sandbox": [
+        {"id": "minecraft", "name": "Minecraft", "category": "Sandbox"},
+    ],
+    "action": [
+        {"id": "gta5", "name": "GTA V", "category": "Action"},
+    ],
+    "sports": [
+        {"id": "rocket-league", "name": "Rocket League", "category": "Sports"},
         {"id": "fifa", "name": "FIFA", "category": "Sports"},
     ],
     "rpg": [
@@ -49,38 +61,18 @@ GAME_CATALOG = {
 }
 
 
-def get_popular_games() -> List[Dict[str, str]]:
-    """Return list of popular games.
-    
-    Returns:
-        List of game dictionaries with id, name, and category
-    """
-    return GAME_CATALOG["popular"]
-
-
 def get_all_games() -> List[Dict[str, str]]:
-    """Return all games across all categories.
+    """Return all games from database.
     
     Returns:
         List of unique game dictionaries sorted by name
     """
-    all_games = []
-    for category in GAME_CATALOG.values():
-        all_games.extend(category)
-    
-    # Remove duplicates and sort
-    seen = set()
-    unique_games = []
-    for game in all_games:
-        if game["id"] not in seen:
-            seen.add(game["id"])
-            unique_games.append(game)
-    
-    return sorted(unique_games, key=lambda x: x["name"])
+    db = get_db()
+    return db.get_all_games()
 
 
 def search_games(query: str) -> List[Dict[str, str]]:
-    """Search games by name.
+    """Search games by name in database.
     
     Args:
         query: Search query string
@@ -88,7 +80,6 @@ def search_games(query: str) -> List[Dict[str, str]]:
     Returns:
         List of matching game dictionaries
     """
-    query = query.lower()
-    all_games = get_all_games()
-    return [game for game in all_games if query in game["name"].lower()]
+    db = get_db()
+    return db.search_games(query)
 

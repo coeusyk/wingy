@@ -11,7 +11,7 @@ interface OnboardingScreenProps {
 
 export function OnboardingScreen({ onGameSelection }: OnboardingScreenProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-card relative overflow-hidden">
+    <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-background via-background to-card overflow-hidden flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl float" />
         <div
