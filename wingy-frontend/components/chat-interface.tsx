@@ -6,28 +6,21 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Send, Sparkles, Copy, Check, User, Lightbulb } from "lucide-react"
 import { useGameContext } from "@/contexts/game-context"
-import { sendChatMessage, getSuggestedQuestions, type SuggestedQuestion } from "@/lib/api"
-import type { Message } from "@/types"
+import { useThreads } from "@/contexts/thread-context"
+import { getSuggestedQuestions, type SuggestedQuestion } from "@/lib/api"
 import { MarkdownMessage } from "./markdown-message"
 
 const QUICK_ACTIONS = ["Ask for tips", "Game mechanics", "Strategy help"]
 
 export function ChatInterface() {
-  const { selectedGames, preference, sessionId, setSessionId, messages, setMessages } = useGameContext()
+  const { selectedGames, preference } = useGameContext()
+  const { activeThread, messages, sendMessage, isLoading: threadLoading } = useThreads()
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Generate session ID if not exists
-  useEffect(() => {
-    if (!sessionId) {
-      const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      setSessionId(newSessionId)
-    }
-  }, [sessionId, setSessionId])
 
   // Fetch suggested questions when games are selected
   useEffect(() => {
@@ -39,7 +32,7 @@ export function ChatInterface() {
           // Limit to top 3 questions
           setSuggestedQuestions(questions.slice(0, 3))
         } catch (err) {
-          console.error("[v0] Error fetching suggested questions:", err)
+          console.error("[ChatInterface] Error fetching suggested questions:", err)
           // Fallback to empty array if fetch fails
           setSuggestedQuestions([])
         }
@@ -48,19 +41,6 @@ export function ChatInterface() {
 
     fetchSuggestedQuestions()
   }, [selectedGames])
-
-  // Initialize welcome message on mount
-  useEffect(() => {
-    if (messages.length === 0 && selectedGames.length > 0) {
-      const welcomeMessage: Message = {
-        id: "1",
-        content: `Welcome to Wingy! I'm your gaming assistant. I see you're interested in ${selectedGames.map((g) => g.name).join(", ")}. Ask me anything about strategies, tips, or game mechanics!`,
-        sender: "agent",
-        timestamp: new Date(),
-      }
-      setMessages([welcomeMessage])
-    }
-  }, [selectedGames, messages.length, setMessages])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -71,54 +51,20 @@ export function ChatInterface() {
   }, [messages])
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !sessionId) return
+    if (!inputValue.trim() || !activeThread) return
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      sender: "user",
-      timestamp: new Date(),
-    }
-
-    setMessages([...messages, userMessage])
-    setInputValue("")
     setIsLoading(true)
     setError(null)
+    const messageContent = inputValue
+    setInputValue("")
 
     try {
-      // Prepare request
-      const request = {
-        message: inputValue,
-        session_id: sessionId,
-        games: selectedGames.map((g) => g.name),
-        preferences: preference,
-      }
-
-      // Send to API
-      const response = await sendChatMessage(request)
-
-      // Add agent response
-      const agentMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: response.message,
-        sender: "agent",
-        timestamp: new Date(),
-        isNew: true,
-      }
-      setMessages([...messages, userMessage, agentMessage])
+      await sendMessage(messageContent)
     } catch (err) {
-      console.error("[v0] Error sending message:", err)
+      console.error("[ChatInterface] Error sending message:", err)
       setError(err instanceof Error ? err.message : "Failed to send message")
-      
-      // Add error message to chat
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Sorry, I encountered an error processing your message. Please try again.",
-        sender: "agent",
-        timestamp: new Date(),
-        isNew: true,
-      }
-      setMessages([...messages, userMessage, errorMessage])
+      // Restore input on error
+      setInputValue(messageContent)
     } finally {
       setIsLoading(false)
     }
@@ -145,23 +91,38 @@ export function ChatInterface() {
     }
   }
 
-  const isEmptyChat = messages.length === 1 && !isLoading
+  const isEmptyChat = messages.length === 0 && !isLoading && !threadLoading
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] max-w-4xl mx-auto">
-      {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+    <div className="flex flex-col h-[calc(100vh-80px)] lg:ml-0">
+      {/* No Active Thread State */}
+      {!activeThread ? (
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <Sparkles className="w-10 h-10 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">No Chat Selected</h2>
+            <p className="text-muted-foreground mb-6">
+              Select a conversation from the sidebar or create a new chat to get started.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Messages Container */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"} slide-up`}
+            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} slide-up`}
           >
             <div className={`flex gap-2 items-end ${
-              message.sender === "user" 
+              message.role === "user" 
                 ? "max-w-[80%] sm:max-w-[80%] ml-auto mr-4 sm:mr-6" 
                 : "max-w-[80%] sm:max-w-[80%] mr-auto ml-4 sm:ml-6"
             }`}>
-              {message.sender === "agent" && (
+              {message.role === "assistant" && (
                 <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-3 h-3 text-primary" />
                 </div>
@@ -169,19 +130,19 @@ export function ChatInterface() {
 
               <div
                 className={`px-4 py-3 rounded-lg relative group ${
-                  message.sender === "user"
+                  message.role === "user"
                     ? "bg-primary text-primary-foreground rounded-br-none"
                     : "bg-card border border-border/50 text-foreground rounded-bl-none hover:border-primary/30 transition-colors"
                 }`}
               >
-                {message.sender === "agent" ? (
+                {message.role === "assistant" ? (
                   <MarkdownMessage content={message.content} />
                 ) : (
                   <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 )}
 
                 {/* Copy button - always in DOM, hidden with opacity */}
-                {message.sender === "agent" && (
+                {message.role === "assistant" && (
                   <button
                     onClick={() => handleCopyMessage(message.content, message.id)}
                     className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity p-1 hover:bg-primary/20 rounded will-change-opacity"
@@ -194,15 +155,9 @@ export function ChatInterface() {
                     )}
                   </button>
                 )}
-
-                {message.isNew && message.sender === "agent" && (
-                  <div className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold px-2 py-1 rounded-full">
-                    New
-                  </div>
-                )}
               </div>
 
-              {message.sender === "user" && (
+              {message.role === "user" && (
                 <div className="w-6 h-6 rounded-full bg-primary/30 border border-primary/50 flex items-center justify-center flex-shrink-0">
                   <User className="w-3 h-3 text-primary-foreground" />
                 </div>
@@ -296,39 +251,49 @@ export function ChatInterface() {
 
       {/* Input Area */}
       <div className="border-t-2 border-primary/30 bg-card/80 backdrop-blur-sm p-4 md:p-6 shadow-lg">
-        <div className="flex gap-3">
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Ask me about gaming strategies..."
-            className="flex-1 bg-input border-2 border-primary/40 rounded-lg px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none max-h-24 shadow-sm hover:border-primary/60"
-            rows={1}
-            aria-label="Message input"
-          />
-          <div className="flex flex-col gap-2">
-            <Button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed pulse-glow"
-              aria-label="Send message"
-            >
-              <Send className="w-5 h-5" />
-            </Button>
-            {isLoading && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs border-border/50 hover:bg-secondary/50 bg-transparent"
-                aria-label="Stop generating"
-              >
-                Stop
-              </Button>
-            )}
+        {!activeThread ? (
+          <div className="text-center text-muted-foreground text-sm py-4">
+            Select or create a chat to start messaging
           </div>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">Shift + Enter for new line</p>
+        ) : (
+          <>
+            <div className="flex gap-3">
+              <textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask me about gaming strategies..."
+                className="flex-1 bg-input border-2 border-primary/40 rounded-lg px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none max-h-24 shadow-sm hover:border-primary/60"
+                rows={1}
+                aria-label="Message input"
+              />
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() || isLoading}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed pulse-glow"
+                  aria-label="Send message"
+                >
+                  <Send className="w-5 h-5" />
+                </Button>
+                {isLoading && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs border-border/50 hover:bg-secondary/50 bg-transparent"
+                    aria-label="Stop generating"
+                  >
+                    Stop
+                  </Button>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">Shift + Enter for new line</p>
+          </>
+        )}
       </div>
+        </>
+      )}
     </div>
   )
 }

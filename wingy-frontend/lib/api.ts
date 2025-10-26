@@ -1,5 +1,9 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
+// Export user and thread API functions
+export * from "./api/user"
+export * from "./api/threads"
+
 export interface ApiError {
   message: string
   status: number
@@ -92,6 +96,7 @@ export interface ChatMessage {
 export interface ChatRequest {
   message: string
   session_id: string
+  thread_id?: string
   user_id?: string
   games?: string[]
   preferences?: string[]

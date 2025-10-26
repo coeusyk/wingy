@@ -8,7 +8,7 @@ import { useGameContext } from "@/contexts/game-context"
 import type { Game, PreferenceType } from "@/types"
 
 interface OnboardingContainerProps {
-  onComplete: () => void
+  onComplete: (games: string[], preferences: string[]) => void
 }
 
 export function OnboardingContainer({ onComplete }: OnboardingContainerProps) {
@@ -23,7 +23,10 @@ export function OnboardingContainer({ onComplete }: OnboardingContainerProps) {
   }
 
   const handleComplete = () => {
-    onComplete()
+    // Convert selected games to game IDs (strings)
+    const gameIds = selectedGames.map((game) => game.id)
+    // Pass both games and preferences to the parent
+    onComplete(gameIds, preference)
   }
 
   return (

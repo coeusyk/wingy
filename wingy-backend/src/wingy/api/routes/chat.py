@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from agents import Runner, SQLiteSession
 
 from ...agents.orchestrator import orchestrator_agent
+from ...sessions.db_manager import get_db as get_sessions_db
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -34,7 +35,8 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     """Request model for chat endpoint."""
     message: str = Field(..., description="User's message to the agent")
-    session_id: str = Field(..., description="Unique session identifier for the conversation")
+    session_id: str = Field(..., description="Unique session identifier for the conversation (deprecated, use thread_id)")
+    thread_id: str | None = Field(None, description="Thread identifier for multi-thread support")
     user_id: str | None = Field(None, description="Optional user identifier")
     games: list[str] | None = Field(None, description="List of games the user plays")
     preferences: list[str] | None = Field(None, description="User's assistance preferences")
@@ -60,9 +62,10 @@ async def send_message(request: ChatRequest) -> ChatResponse:
     Send a message to the agent and get a response.
     
     This endpoint:
-    1. Creates or loads the user's session
+    1. Creates or loads the user's session/thread
     2. Runs the orchestrator agent with the user's message
     3. Returns the agent's response
+    4. Saves messages to database if thread_id is provided
     
     The orchestrator will automatically:
     - Hand off to specialized agents as needed
@@ -70,11 +73,13 @@ async def send_message(request: ChatRequest) -> ChatResponse:
     - Apply guardrails for safety
     """
     try:
-        logger.info(f"Received message for session {request.session_id}")
+        # Use thread_id if provided, otherwise fall back to session_id
+        session_id = request.thread_id or request.session_id
+        logger.info(f"Received message for session {session_id}")
         
-        # Create SQLite session for conversation history
+        # Create SQLite session for conversation history (used by agents library)
         agent_session = SQLiteSession(
-            session_id=request.session_id,
+            session_id=session_id,
             db_path=str(DB_PATH)
         )
         
@@ -102,11 +107,33 @@ async def send_message(request: ChatRequest) -> ChatResponse:
         # Extract response
         response_text = result.final_output or "I'm sorry, I couldn't process that request."
         
-        logger.info(f"Agent response generated for session {request.session_id}")
+        # Save messages to database if thread_id is provided
+        if request.thread_id:
+            sessions_db = get_sessions_db()
+            
+            # Verify thread exists
+            thread = sessions_db.get_thread(request.thread_id)
+            if thread:
+                # Save user message
+                sessions_db.add_message(
+                    thread_id=request.thread_id,
+                    role="user",
+                    content=request.message
+                )
+                
+                # Save agent response
+                sessions_db.add_message(
+                    thread_id=request.thread_id,
+                    role="assistant",
+                    content=response_text
+                )
+                logger.info(f"Messages saved to thread: {request.thread_id}")
+        
+        logger.info(f"Agent response generated for session {session_id}")
         
         return ChatResponse(
             message=response_text,
-            session_id=request.session_id,
+            session_id=session_id,
             agent_name="Wingy",
         )
         

@@ -8,6 +8,8 @@ import {
   Source_Serif_4 as V0_Font_Source_Serif_4,
 } from "next/font/google"
 import { GameProvider } from "@/contexts/game-context"
+import { UserProvider } from "@/contexts/user-context"
+import { ThreadProvider } from "@/contexts/thread-context"
 
 // Initialize fonts
 const _manrope = V0_Font_Manrope({ subsets: ["latin"], weight: ["200", "300", "400", "500", "600", "700", "800"] })
@@ -47,9 +49,13 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/wingy-logo-transparent.png" />
       </head>
       <body className={`font-sans antialiased w-screen h-screen overflow-hidden`}>
-        <GameProvider>
-          {children}
-        </GameProvider>
+        <UserProvider>
+          <ThreadProvider>
+            <GameProvider>
+              {children}
+            </GameProvider>
+          </ThreadProvider>
+        </UserProvider>
       </body>
     </html>
   )

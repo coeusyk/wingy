@@ -1,14 +1,48 @@
 """FastAPI application for Wingy."""
 
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routes.games import router as games_router
 from .routes.chat import router as chat_router
+from .routes.users import router as users_router
+from .routes.threads import router as threads_router
 from ..games.db_manager import get_db
+from ..sessions.db_manager import get_db as get_sessions_db
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan events.
+    
+    Startup: Initialize databases and seed data if needed.
+    Shutdown: Cleanup resources.
+    """
+    # Startup logic
+    logger.info("Initializing databases...")
+    
+    # Initialize games database
+    db = get_db()
+    games = db.get_all_games()
+    if not games:
+        logger.info("Games database is empty, seeding with initial data...")
+        db.seed_data()
+        logger.info("Games database seeded successfully")
+    else:
+        logger.info(f"Games database already contains {len(games)} games")
+    
+    # Initialize sessions database
+    sessions_db = get_sessions_db()
+    logger.info("Sessions database initialized successfully")
+    
+    yield  # Application is running
+    
+    # Shutdown logic (if needed)
+    logger.info("Application shutting down...")
 
 
 def create_app() -> FastAPI:
@@ -21,6 +55,7 @@ def create_app() -> FastAPI:
         title="Wingy API",
         description="Intelligent Game Helper and Learning Assistant API",
         version="0.1.0",
+        lifespan=lifespan,
     )
     
     # Configure CORS
@@ -32,25 +67,11 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
-    # Startup event to initialize database
-    @app.on_event("startup")
-    async def startup_event():
-        """Initialize database on startup."""
-        logger.info("Initializing games database...")
-        db = get_db()
-        
-        # Check if database is empty and seed if needed
-        games = db.get_all_games()
-        if not games:
-            logger.info("Database is empty, seeding with initial data...")
-            db.seed_data()
-            logger.info("Database seeded successfully")
-        else:
-            logger.info(f"Database already contains {len(games)} games")
-    
     # Include routers
     app.include_router(games_router)
     app.include_router(chat_router)
+    app.include_router(users_router)
+    app.include_router(threads_router)
     
     @app.get("/")
     async def root():
