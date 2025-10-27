@@ -112,16 +112,16 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
   const filteredGames = searchQuery.trim() ? games : games
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-4 sm:space-y-6 flex flex-col max-h-[calc(100vh-8rem)] overflow-hidden">
       {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+      <div className="relative flex-shrink-0">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
         <input
           type="text"
           placeholder="Search for games..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 bg-input border border-border/50 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+          className="w-full pl-9 sm:pl-10 pr-10 sm:pr-4 py-2.5 sm:py-3 bg-input border border-border/50 rounded-lg text-sm sm:text-base text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
           aria-label="Search games"
         />
         {searchQuery && (
@@ -130,16 +130,16 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Clear search"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         )}
       </div>
 
       {/* Game Selection */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-5 h-5 text-accent" />
-          <h2 className="text-xl font-semibold text-foreground">Choose Your Games</h2>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Choose Your Games</h2>
         </div>
 
         {error ? (
@@ -147,13 +147,13 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
         ) : isLoading || isSearching ? (
           <GameGridSkeleton />
         ) : filteredGames.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">
+          <div className="text-center py-6 sm:py-8">
+            <p className="text-sm sm:text-base text-muted-foreground">
               {searchQuery ? `No games found matching "${searchQuery}"` : "No games available"}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3">
             {filteredGames.map((game) => (
               <GameCard
                 key={game.id}
@@ -168,19 +168,19 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
 
       {/* Selected Games Display */}
       {selectedGames.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-3 bg-primary/10 border border-primary/30 rounded-lg">
+        <div className="flex flex-wrap gap-2 p-2.5 sm:p-3 bg-primary/10 border border-primary/30 rounded-lg flex-shrink-0 max-h-32 sm:max-h-40 overflow-y-auto">
           {selectedGames.map((game) => (
             <div
               key={game.id}
-              className="flex items-center gap-2 px-3 py-1 bg-primary/20 border border-primary/50 rounded-full text-sm"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 bg-primary/20 border border-primary/50 rounded-full text-xs sm:text-sm"
             >
-              <span>{game.name}</span>
+              <span className="truncate max-w-[120px] sm:max-w-none">{game.name}</span>
               <button
                 onClick={() => setSelectedGames((prev) => prev.filter((g) => g.id !== game.id))}
-                className="hover:text-destructive transition-colors"
+                className="hover:text-destructive transition-colors flex-shrink-0"
                 aria-label={`Remove ${game.name}`}
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
           ))}
@@ -188,12 +188,12 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
       )}
 
       {/* Custom Game Input */}
-      <div className="space-y-2">
+      <div className="space-y-2 flex-shrink-0">
         {!showCustomInput ? (
           <Button
             onClick={() => setShowCustomInput(true)}
             variant="outline"
-            className="w-full border-border/50 hover:bg-secondary/50"
+            className="w-full border-border/50 hover:bg-secondary/50 text-sm sm:text-base"
           >
             + Add Custom Game
           </Button>
@@ -205,11 +205,11 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
               value={customGameInput}
               onChange={(e) => setCustomGameInput(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && addCustomGame()}
-              className="flex-1 px-3 py-2 bg-input border border-border/50 rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="flex-1 px-2.5 sm:px-3 py-2 bg-input border border-border/50 rounded-lg text-sm sm:text-base text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               autoFocus
               aria-label="Custom game name"
             />
-            <Button onClick={addCustomGame} className="bg-primary hover:bg-primary/90">
+            <Button onClick={addCustomGame} className="bg-primary hover:bg-primary/90 text-sm sm:text-base px-3 sm:px-4">
               Add
             </Button>
             <Button
@@ -218,7 +218,7 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
                 setCustomGameInput("")
               }}
               variant="outline"
-              className="border-border/50"
+              className="border-border/50 text-sm sm:text-base px-3 sm:px-4"
             >
               Cancel
             </Button>
@@ -227,8 +227,8 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
       </div>
 
       {/* Selection Count */}
-      <div className="text-center">
-        <p className="text-muted-foreground">
+      <div className="text-center flex-shrink-0">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           {selectedGames.length === 0
             ? "Select at least one game to continue"
             : `${selectedGames.length} game${selectedGames.length !== 1 ? "s" : ""} selected`}
@@ -239,7 +239,7 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
       <Button
         onClick={handleContinue}
         disabled={selectedGames.length === 0}
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 text-lg rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed pulse-glow"
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-5 sm:py-6 text-base sm:text-lg rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed pulse-glow flex-shrink-0"
       >
         Continue to Chat
       </Button>

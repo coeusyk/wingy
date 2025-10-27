@@ -67,7 +67,7 @@ export function PreferencesScreen({
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-background via-background to-card overflow-hidden flex items-center justify-center p-4">
+    <div className="min-h-screen w-full bg-gradient-to-br from-background via-background to-card overflow-auto flex items-center justify-center p-2 sm:p-4">
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl float" />
@@ -77,16 +77,16 @@ export function PreferencesScreen({
         />
       </div>
 
-      <Card className="w-full max-w-4xl border-border/50 bg-card/80 backdrop-blur-sm slide-up relative z-10">
-          <div className="p-8 md:p-12">
+      <Card className="w-full max-w-4xl border-border/50 bg-card/80 backdrop-blur-sm slide-up relative z-10 mx-auto my-4">
+          <div className="p-3 sm:p-4 lg:p-6 flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="mb-12 text-center">
-              <h2 className="text-4xl font-bold mb-3">What kind of help are you looking for?</h2>
-              <p className="text-muted-foreground text-lg">Select all that apply - choose multiple options</p>
+            <div className="mb-4 sm:mb-6 text-center flex-shrink-0">
+              <h2 className="text-xl sm:text-2xl font-bold mb-2 px-2">What kind of help are you looking for?</h2>
+              <p className="text-muted-foreground text-sm px-4">Select all that apply - choose multiple options</p>
             </div>
 
             {/* Preference cards - Fixed grid with consistent heights */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6 flex-1 overflow-y-auto">
               {preferences.map((pref) => {
                 const Icon = pref.icon
                 const isSelected = selectedPreference.includes(pref.id)
@@ -95,21 +95,21 @@ export function PreferencesScreen({
                   <button
                     key={pref.id}
                     onClick={() => handleToggle(pref.id)}
-                    className={`p-6 rounded-lg border-2 transition-all duration-200 text-left hover:border-primary/50 flex flex-col h-full min-h-[140px] ${
+                    className={`p-3 sm:p-4 rounded-lg border-2 transition-all duration-200 text-left hover:border-primary/50 flex flex-col h-full min-h-[100px] sm:min-h-[120px] ${
                       isSelected ? "border-primary bg-primary/10" : "border-border/50 bg-card/50 hover:bg-card/70"
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <Icon className={`w-8 h-8 flex-shrink-0 transition-colors duration-300 ${isSelected ? "text-primary" : "text-accent"}`} />
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                    <div className="flex items-start justify-between mb-2">
+                      <Icon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 transition-colors duration-300 ${isSelected ? "text-primary" : "text-accent"}`} />
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
                         isSelected ? "bg-primary border-primary" : "border-border/50"
                       }`}>
-                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                        {isSelected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
                       </div>
                     </div>
                     <div className="flex-1 flex flex-col justify-start">
-                      <h3 className="font-semibold mb-2 text-base leading-tight">{pref.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-snug">{pref.description}</p>
+                      <h3 className="font-semibold mb-1 text-sm leading-tight">{pref.title}</h3>
+                      <p className="text-xs text-muted-foreground leading-snug">{pref.description}</p>
                     </div>
                   </button>
                 )
@@ -117,14 +117,14 @@ export function PreferencesScreen({
             </div>
 
             {/* Bottom actions */}
-            <div className="flex gap-4 pt-8 border-t border-border/50">
-              <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent">
+            <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4 md:pt-6 border-t border-border/50 flex-shrink-0">
+              <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent text-sm">
                 Back
               </Button>
               <Button
                 onClick={onContinue}
                 disabled={selectedPreference.length === 0}
-                className="flex-1 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+                className="flex-1 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-sm"
               >
                 Start Chatting
               </Button>

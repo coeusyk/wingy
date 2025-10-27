@@ -3,13 +3,19 @@
 import { WelcomeScreen } from "./welcome-screen"
 import { GameSelection } from "./game-selection"
 import { PreferencesScreen } from "./preferences-screen"
-import { ProgressIndicator } from "./progress-indicator"
+import { VerticalProgressIndicator } from "./vertical-progress-indicator"
 import { useGameContext } from "@/contexts/game-context"
 import type { Game, PreferenceType } from "@/types"
 
 interface OnboardingContainerProps {
   onComplete: (games: string[], preferences: string[]) => void
 }
+
+const ONBOARDING_STEPS = [
+  { number: 1, title: "Welcome", description: "Get started" },
+  { number: 2, title: "Select Games", description: "Choose your games" },
+  { number: 3, title: "Preferences", description: "Set your goals" },
+]
 
 export function OnboardingContainer({ onComplete }: OnboardingContainerProps) {
   const { currentStep, setCurrentStep, selectedGames, setSelectedGames, preference, setPreference } = useGameContext()
@@ -30,16 +36,16 @@ export function OnboardingContainer({ onComplete }: OnboardingContainerProps) {
   }
 
   return (
-    <div>
+    <div className="flex h-screen overflow-hidden">
+      {/* Vertical Progress Indicator - Hidden on step 1, visible on steps 2-3 */}
       {currentStep > 1 && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border/50 p-4">
-          <div className="max-w-7xl mx-auto">
-            <ProgressIndicator currentStep={currentStep} totalSteps={3} />
-          </div>
+        <div className="hidden lg:block">
+          <VerticalProgressIndicator currentStep={currentStep} steps={ONBOARDING_STEPS} />
         </div>
       )}
 
-      <div className={currentStep > 1 ? "pt-24" : ""}>
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
         {currentStep === 1 && <WelcomeScreen onContinue={() => setCurrentStep(2)} />}
 
         {currentStep === 2 && (

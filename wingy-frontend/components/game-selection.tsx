@@ -94,7 +94,7 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-background via-background to-card overflow-hidden flex items-center justify-center p-4">
+    <div className="min-h-screen w-full bg-gradient-to-br from-background via-background to-card overflow-auto flex items-center justify-center p-2 sm:p-4">
       {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl float" />
@@ -104,30 +104,33 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
         />
       </div>
 
-      <Card className="w-full max-w-5xl border-border/50 bg-card/80 backdrop-blur-sm slide-up relative z-10 mx-auto">
-        <div className="p-8 md:p-12">
+      <Card className="w-full max-w-4xl border-border/50 bg-card/80 backdrop-blur-sm slide-up relative z-10 mx-auto my-4">
+        <div className="p-3 sm:p-4 lg:p-6 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-4xl font-bold mb-2">Which games do you play?</h2>
-            <p className="text-muted-foreground text-lg">Select your favorites to get personalized tips</p>
+          <div className="mb-3 sm:mb-4 flex-shrink-0">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2">Which games do you play?</h2>
+            <p className="text-muted-foreground text-sm">Select your favorites to get personalized tips</p>
           </div>
 
           {/* Search bar */}
-          <div className="mb-8 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <div className="mb-3 sm:mb-4 md:mb-6 relative flex-shrink-0">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search for games..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 py-6 text-base"
+              className="pl-10 py-2 sm:py-3 text-sm"
               aria-label="Search games"
             />
           </div>
 
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 -mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6">
+
           {/* Loading state */}
           {isLoading && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 mb-4 sm:mb-6">
               {Array.from({ length: 12 }).map((_, i) => (
                 <GameCardSkeleton key={i} />
               ))}
@@ -142,14 +145,14 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
             <>
               {/* All games or search results */}
               {(searchQuery || games.length > 0) && (
-                <div className="mb-8">
+                <div className="mb-4 sm:mb-6">
                   {searchQuery && (
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">
+                    <h3 className="text-xs font-semibold text-muted-foreground mb-2 sm:mb-3 uppercase tracking-wide">
                       Search Results
                     </h3>
                   )}
                   {filteredGames.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
                       {filteredGames.map((game) => (
                         <GameCard
                           key={game.id}
@@ -160,8 +163,8 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12">
-                      <p className="text-muted-foreground">No games found</p>
+                    <div className="text-center py-6 sm:py-8">
+                      <p className="text-muted-foreground text-sm">No games found</p>
                     </div>
                   )}
                 </div>
@@ -171,7 +174,7 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
               {!showCustomInput && (
                 <Button
                   variant="outline"
-                  className="w-full mb-8 border-dashed bg-transparent hover:text-destructive hover:border-destructive transition-colors"
+                  className="w-full mb-4 sm:mb-6 border-dashed bg-transparent hover:text-destructive hover:border-destructive transition-colors text-sm"
                   onClick={() => setShowCustomInput(true)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -181,7 +184,7 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
 
               {/* Custom game input */}
               {showCustomInput && (
-                <div className="mb-8 flex gap-2">
+                <div className="mb-4 sm:mb-6 flex gap-2">
                   <Input
                     type="text"
                     placeholder="Enter game name..."
@@ -191,6 +194,7 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
                       if (e.key === "Enter") handleAddCustomGame()
                     }}
                     autoFocus
+                    className="text-sm"
                   />
                   <Button onClick={handleAddCustomGame} size="sm">
                     Add
@@ -209,16 +213,17 @@ export function GameSelection({ selectedGames, onGameSelect, onContinue, onBack 
               )}
             </>
           )}
+          </div>
 
           {/* Bottom actions */}
-          <div className="flex gap-4 pt-8 border-t border-border/50">
-            <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent hover:text-destructive hover:border-destructive transition-colors">
+          <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4 md:pt-6 border-t border-border/50 flex-shrink-0">
+            <Button variant="outline" onClick={onBack} className="flex-1 bg-transparent hover:text-destructive hover:border-destructive transition-colors text-sm">
               Back
             </Button>
             <Button
               onClick={onContinue}
               disabled={selectedGames.length === 0}
-              className="flex-1 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+              className="flex-1 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-sm"
             >
               Continue
             </Button>
