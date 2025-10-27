@@ -2,15 +2,13 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Send, Sparkles, Copy, Check, User, Lightbulb } from "lucide-react"
 import { useGameContext } from "@/contexts/game-context"
 import { useThreads } from "@/contexts/thread-context"
 import { getSuggestedQuestions, type SuggestedQuestion } from "@/lib/api"
 import { MarkdownMessage } from "./markdown-message"
-
-const QUICK_ACTIONS = ["Ask for tips", "Game mechanics", "Strategy help"]
 
 export function ChatInterface() {
   const { selectedGames, preference } = useGameContext()
@@ -21,6 +19,53 @@ export function ChatInterface() {
   const [error, setError] = useState<string | null>(null)
   const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Generate dynamic quick actions based on selected games and preferences
+  const quickActions = useMemo(() => {
+    if (selectedGames.length === 0) {
+      return [
+        { text: "Ask for tips", game: null as typeof selectedGames[0] | null },
+        { text: "Game mechanics", game: null as typeof selectedGames[0] | null },
+        { text: "Strategy help", game: null as typeof selectedGames[0] | null },
+      ]
+    }
+
+    const actions: Array<{ text: string; game: typeof selectedGames[0] | null }> = []
+    
+    // Add preference-based action if available
+    if (preference.length > 0) {
+      const pref = preference[0]
+      const prefMap: Record<string, string> = {
+        competitive: "Ranked strategies",
+        improvement: "How to improve",
+        learning: "Explain mechanics",
+        strategy: "Advanced tactics",
+        entertainment: "Fun tips",
+        general: "General help",
+      }
+      actions.push({ text: prefMap[pref] || "Ask for tips", game: null })
+    }
+
+    // Add game-specific actions for first 2-3 games
+    const gamesToShow = selectedGames.slice(0, 2)
+    gamesToShow.forEach((game) => {
+      if (preference.includes("competitive")) {
+        actions.push({ text: `Best builds for`, game })
+      } else if (preference.includes("strategy")) {
+        actions.push({ text: `Counters and tactics for`, game })
+      } else {
+        actions.push({ text: `Tips for`, game })
+      }
+    })
+
+    // If we have space, add a general action
+    if (actions.length < 4) {
+      actions.push({ text: "Common mistakes to avoid", game: null })
+    }
+
+    return actions.slice(0, 4) // Limit to 4 actions
+  }, [selectedGames, preference])
 
   // Fetch suggested questions when games are selected
   useEffect(() => {
@@ -50,6 +95,15 @@ export function ChatInterface() {
     scrollToBottom()
   }, [messages])
 
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "48px" // Reset to min height
+      const scrollHeight = textareaRef.current.scrollHeight
+      textareaRef.current.style.height = `${Math.min(scrollHeight, 200)}px`
+    }
+  }, [inputValue])
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !activeThread) return
 
@@ -70,8 +124,12 @@ export function ChatInterface() {
     }
   }
 
-  const handleQuickAction = (action: string) => {
-    setInputValue(action)
+  const handleQuickAction = (text: string, game: typeof selectedGames[0] | null) => {
+    let fullText = text
+    if (game) {
+      fullText = `${text} ${game.name}`
+    }
+    setInputValue(fullText)
   }
 
   const handleSuggestedQuestion = (question: string) => {
@@ -111,44 +169,47 @@ export function ChatInterface() {
       ) : (
         <>
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
         
         {/* Initial greeting message - only shows when no messages */}
         {isEmptyChat && (
-          <div className="flex justify-start slide-up mb-6 sm:mb-8">
-            <div className="flex gap-1.5 sm:gap-2 items-end max-w-[85%] sm:max-w-[80%] mr-auto ml-2 sm:ml-4 md:ml-6">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary" />
+          <div className="flex justify-start slide-up">
+            <div className="flex gap-2 items-end max-w-[85%] sm:max-w-[80%] mr-auto ml-4 sm:ml-6">
+              <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-3 h-3 text-primary" />
               </div>
-              <div className="bg-card border border-border/50 text-foreground rounded-lg rounded-bl-none px-3 sm:px-4 py-2.5 sm:py-3">
+              <div className="bg-card border border-border/50 text-foreground rounded-lg rounded-bl-none px-4 py-3">
                 <div className="space-y-2">
-                  <p className="text-sm sm:text-base leading-relaxed">
-                    👋 Hi! I'm <span className="font-semibold text-primary">Wingy</span>, your gaming assistant.
-                  </p>
-                  {selectedGames.length > 0 && (
-                    <p className="text-sm sm:text-base leading-relaxed">
-                      I see you're interested in{" "}
-                      <span className="font-medium text-primary">
-                        {selectedGames.map((g, idx) => (
-                          <span key={g.id}>
-                            {g.name}
-                            {idx < selectedGames.length - 2 ? ", " : idx === selectedGames.length - 2 ? " and " : ""}
-                          </span>
-                        ))}
-                      </span>
-                      . {preference.length > 0 && (
-                        <span>
-                          I'll help you with{" "}
-                          <span className="font-medium text-accent">
-                            {preference.map(p => p.replace(/_/g, " ")).join(", ")}
-                          </span>.
+                  {selectedGames.length > 0 ? (
+                    <>
+                      <p className="text-sm sm:text-base leading-relaxed">
+                        👋 I can help you with{" "}
+                        <span className="font-medium text-primary">
+                          {selectedGames.map((g, idx) => (
+                            <span key={g.id}>
+                              {g.name}
+                              {idx < selectedGames.length - 2 ? ", " : idx === selectedGames.length - 2 ? " and " : ""}
+                            </span>
+                          ))}
                         </span>
-                      )}
+                        {preference.length > 0 && (
+                          <span>
+                            {" - focusing on "}
+                            <span className="font-medium text-accent">
+                              {preference.map(p => p.replace(/_/g, " ")).join(", ")}
+                            </span>
+                          </span>
+                        )}.
+                      </p>
+                      <p className="text-sm sm:text-base leading-relaxed">
+                        Ask me anything - tips, strategies, mechanics, or just chat about your favorite games! 🎮
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm sm:text-base leading-relaxed">
+                      👋 Ask me anything - tips, strategies, mechanics, or just chat about your favorite games! 🎮
                     </p>
                   )}
-                  <p className="text-sm sm:text-base leading-relaxed">
-                    Ask me anything - tips, strategies, mechanics, or just chat about your favorite games! 🎮
-                  </p>
                 </div>
               </div>
             </div>
@@ -160,19 +221,19 @@ export function ChatInterface() {
             key={message.id}
             className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} slide-up`}
           >
-            <div className={`flex gap-1.5 sm:gap-2 items-end ${
+            <div className={`flex gap-2 items-end ${
               message.role === "user" 
-                ? "max-w-[85%] sm:max-w-[80%] ml-auto mr-2 sm:mr-4 md:mr-6" 
-                : "max-w-[85%] sm:max-w-[80%] mr-auto ml-2 sm:ml-4 md:ml-6"
+                ? "max-w-[85%] sm:max-w-[80%] ml-auto mr-4 sm:mr-6" 
+                : "max-w-[85%] sm:max-w-[80%] mr-auto ml-4 sm:ml-6"
             }`}>
               {message.role === "assistant" && (
-                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary" />
+                <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-3 h-3 text-primary" />
                 </div>
               )}
 
               <div
-                className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg relative group ${
+                className={`px-4 py-3 rounded-lg relative group ${
                   message.role === "user"
                     ? "bg-primary text-primary-foreground rounded-br-none"
                     : "bg-card border border-border/50 text-foreground rounded-bl-none hover:border-primary/30 transition-colors"
@@ -181,28 +242,28 @@ export function ChatInterface() {
                 {message.role === "assistant" ? (
                   <MarkdownMessage content={message.content} />
                 ) : (
-                  <p className="text-xs sm:text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+                  <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
                 )}
 
                 {/* Copy button - always in DOM, hidden with opacity */}
                 {message.role === "assistant" && (
                   <button
                     onClick={() => handleCopyMessage(message.content, message.id)}
-                    className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity p-1 hover:bg-primary/20 rounded will-change-opacity"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity p-1 hover:bg-primary/20 rounded will-change-opacity"
                     aria-label="Copy message"
                   >
                     {copiedId === message.id ? (
-                      <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+                      <Check className="w-4 h-4 text-green-500" />
                     ) : (
-                      <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <Copy className="w-4 h-4" />
                     )}
                   </button>
                 )}
               </div>
 
               {message.role === "user" && (
-                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/30 border border-primary/50 flex items-center justify-center flex-shrink-0">
-                  <User className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />
+                <div className="w-6 h-6 rounded-full bg-primary/30 border border-primary/50 flex items-center justify-center flex-shrink-0">
+                  <User className="w-3 h-3 text-primary-foreground" />
                 </div>
               )}
             </div>
@@ -210,12 +271,12 @@ export function ChatInterface() {
         ))}
 
         {isEmptyChat && (
-          <div className="flex flex-col gap-4 sm:gap-6 mt-6 sm:mt-8">
-            <div className="flex items-center gap-2 mb-1 sm:mb-2">
-              <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+          <div className="flex flex-col gap-6 mt-8">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-accent" />
               <p className="text-sm sm:text-base text-muted-foreground font-medium">Suggested questions:</p>
             </div>
-            <div className="grid gap-1 sm:gap-1.5">
+            <div className="grid gap-2">
               {suggestedQuestions.length > 0 ? (
                 suggestedQuestions.map((q) => {
                   // Find the game that this question belongs to
@@ -225,13 +286,13 @@ export function ChatInterface() {
                     <button
                       key={q.id}
                       onClick={() => handleSuggestedQuestion(q.question)}
-                      className="flex items-center justify-between gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-card border border-border/50 hover:border-primary/50 hover:bg-card/80 transition-all text-left text-xs sm:text-sm text-foreground hover:text-primary"
+                      className="flex items-center justify-between gap-3 p-3 rounded-lg bg-card border border-border/50 hover:border-primary/50 hover:bg-card/80 transition-all text-left text-sm text-foreground hover:text-primary"
                       aria-label={`Ask: ${q.question}`}
                     >
                       <span className="flex-1 break-words">{q.question}</span>
                       {game && (
                         <span
-                          className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-primary/30 border border-primary/50 flex-shrink-0"
+                          className="text-xs px-2 py-0.5 rounded-full bg-primary/30 border border-primary/50 flex-shrink-0"
                           title={game.name}
                         >
                           {game.abbr}
@@ -241,23 +302,28 @@ export function ChatInterface() {
                   )
                 })
               ) : (
-                <p className="text-muted-foreground text-xs sm:text-sm">Select games to see personalized questions</p>
+                <p className="text-muted-foreground text-sm">Select games to see personalized questions</p>
               )}
             </div>
 
-            <div className="flex items-center gap-2 mb-1 sm:mb-2">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
               <p className="text-sm sm:text-base text-muted-foreground font-medium">Quick actions:</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {QUICK_ACTIONS.map((action) => (
+              {quickActions.map((action, idx) => (
                 <button
-                  key={action}
-                  onClick={() => handleQuickAction(action)}
-                  className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-primary/20 text-primary border border-primary/30 hover:border-primary/60 hover:bg-primary/30 transition-all text-xs sm:text-sm font-medium"
-                  aria-label={`Quick action: ${action}`}
+                  key={`${action.text}-${idx}`}
+                  onClick={() => handleQuickAction(action.text, action.game)}
+                  className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-primary/20 text-primary border border-primary/30 hover:border-primary/60 hover:bg-primary/30 transition-all text-xs sm:text-sm font-medium"
+                  aria-label={`Quick action: ${action.text}${action.game ? ` for ${action.game.name}` : ""}`}
                 >
-                  {action}
+                  <span>{action.text}</span>
+                  {action.game && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/30 border border-primary/50">
+                      {action.game.abbr}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -266,24 +332,24 @@ export function ChatInterface() {
 
         {isLoading && (
           <div className="flex justify-start slide-up">
-            <div className="flex gap-1.5 sm:gap-2 items-end">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary" />
+            <div className="flex gap-2 items-end ml-4 sm:ml-6">
+              <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-3 h-3 text-primary" />
               </div>
-              <div className="bg-card border border-border/50 text-foreground rounded-lg rounded-bl-none px-3 sm:px-4 py-2.5 sm:py-3">
+              <div className="bg-card border border-border/50 text-foreground rounded-lg rounded-bl-none px-4 py-3">
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
                     <div
-                      className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-bounce"
+                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
                       style={{ animationDelay: "0.1s" }}
                     />
                     <div
-                      className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-bounce"
+                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
                       style={{ animationDelay: "0.2s" }}
                     />
                   </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground ml-1">Wingy is thinking...</span>
+                  <span className="text-xs text-muted-foreground ml-1">Wingy is thinking...</span>
                 </div>
               </div>
             </div>
@@ -293,46 +359,35 @@ export function ChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t-2 border-primary/30 bg-card/80 backdrop-blur-sm p-3 sm:p-4 md:p-6 shadow-lg">
+      <div className="border-t border-border/50 bg-card/80 backdrop-blur-sm p-3 sm:p-4 shadow-lg">
         {!activeThread ? (
-          <div className="text-center text-muted-foreground text-xs sm:text-sm py-3 sm:py-4">
+          <div className="text-center text-muted-foreground text-xs sm:text-sm py-2">
             Select or create a chat to start messaging
           </div>
         ) : (
-          <>
-            <div className="flex gap-2 sm:gap-3">
+          <div className="flex gap-2 items-end">
+            <div className="flex-1 relative">
               <textarea
+                ref={textareaRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me about gaming strategies..."
-                className="flex-1 bg-input border-2 border-primary/40 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none max-h-20 sm:max-h-24 shadow-sm hover:border-primary/60"
-                rows={1}
+                placeholder="Ask me anything..."
+                className="w-full bg-input border border-border/50 rounded-lg px-3 sm:px-4 py-3 text-sm sm:text-base text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none overflow-y-auto min-h-[48px] max-h-[200px]"
+                style={{ height: "48px" }}
                 aria-label="Message input"
               />
-              <div className="flex flex-col gap-2">
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isLoading}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed pulse-glow"
-                  aria-label="Send message"
-                >
-                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-                </Button>
-                {isLoading && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-[10px] sm:text-xs border-border/50 hover:bg-secondary/50 bg-transparent px-2 py-1"
-                    aria-label="Stop generating"
-                  >
-                    Stop
-                  </Button>
-                )}
-              </div>
+              <p className="text-[10px] text-muted-foreground mt-1 ml-1">Shift + Enter for new line</p>
             </div>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2">Shift + Enter for new line</p>
-          </>
+            <Button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isLoading}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 w-12 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              aria-label="Send message"
+            >
+              <Send className="w-5 h-5" />
+            </Button>
+          </div>
         )}
       </div>
         </>

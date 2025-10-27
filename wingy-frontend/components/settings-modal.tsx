@@ -58,9 +58,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [selectedPreferences, setSelectedPreferences] = useState<PreferenceType[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isClosing, setIsClosing] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
+      setIsClosing(false)
       // Load current preferences
       if (user?.preferences) {
         setSelectedGames(user.preferences.games || [])
@@ -107,7 +109,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         preferences: selectedPreferences,
         onboarded: true,
       })
-      onClose()
+      handleClose()
     } catch (error) {
       console.error("Error saving preferences:", error)
       alert("Failed to save preferences. Please try again.")
@@ -116,16 +118,34 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   }
 
+  const handleClose = () => {
+    setIsClosing(true)
+    setTimeout(() => {
+      onClose()
+      setIsClosing(false)
+    }, 200) // Match animation duration
+  }
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] bg-card border-2 border-border/50 rounded-lg shadow-2xl flex flex-col">
+    <div 
+      className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
+        isClosing ? "opacity-0" : "opacity-100"
+      }`}
+      onClick={handleClose}
+    >
+      <div 
+        className={`w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] bg-card border-2 border-border/50 rounded-lg shadow-2xl flex flex-col transition-all duration-200 ${
+          isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border/50 flex-shrink-0">
           <h2 className="text-xl sm:text-2xl font-bold">Settings</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 sm:p-2 hover:bg-secondary/50 rounded-lg transition-colors"
             aria-label="Close settings"
           >
@@ -215,7 +235,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {/* Footer */}
         <div className="flex gap-2 sm:gap-3 p-4 sm:p-6 border-t border-border/50 flex-shrink-0">
           <Button
-            onClick={onClose}
+            onClick={handleClose}
             variant="outline"
             className="flex-1 border-border/50 text-sm sm:text-base"
             disabled={isSaving}

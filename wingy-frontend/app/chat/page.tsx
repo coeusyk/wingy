@@ -81,7 +81,7 @@ export default function ChatPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <Header onResetPreferences={handleResetPreferences} />
+        <Header onResetPreferences={handleResetPreferences} onOpenSettings={() => setIsSettingsOpen(true)} />
         <ChatInterface />
       </div>
 

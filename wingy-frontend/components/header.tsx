@@ -10,19 +10,12 @@ import type { Game } from "@/types"
 
 interface HeaderProps {
   onResetPreferences: () => void
+  onOpenSettings: () => void
 }
 
-export function Header({ onResetPreferences }: HeaderProps) {
-  const { selectedGames, setSelectedGames, setMessages } = useGameContext()
-  const [isModalOpen, setIsModalOpen] = useState(false)
+export function Header({ onResetPreferences, onOpenSettings }: HeaderProps) {
+  const { selectedGames, setMessages } = useGameContext()
   const [showClearConfirm, setShowClearConfirm] = useState(false)
-
-  const handleSaveChanges = (games: Game[]) => {
-    if (games.length > 0) {
-      setSelectedGames(games)
-      setIsModalOpen(false)
-    }
-  }
 
   const handleExportChat = () => {
     const chatContent = "Chat export feature - to be integrated with actual chat data"
@@ -44,25 +37,8 @@ export function Header({ onResetPreferences }: HeaderProps) {
     <>
       <header className="border-b border-border/50 bg-gradient-to-r from-card/50 via-card/30 to-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <div className="p-1.5 sm:p-2 bg-primary/20 rounded-lg">
-              <Image
-                src="/wingy-logo-transparent.png"
-                alt="Wingy Logo"
-                width={24}
-                height={24}
-                className="w-5 h-5 sm:w-6 sm:h-6"
-                loading="eager"
-              />
-            </div>
-            <div className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Wingy
-            </div>
-          </div>
-
           {/* Selected Games */}
-          <div className="flex-1 mx-2 sm:mx-4 md:mx-8 hidden md:flex items-center gap-2 flex-wrap overflow-x-auto">
+          <div className="flex-1 mx-2 sm:mx-4 md:mx-8 flex items-center gap-2 flex-wrap overflow-x-auto">
             {selectedGames.slice(0, 3).map((game) => (
               <span
                 key={game.id}
@@ -84,7 +60,7 @@ export function Header({ onResetPreferences }: HeaderProps) {
               onClick={handleExportChat}
               variant="outline"
               size="sm"
-              className="border-border/50 hover:bg-secondary/50 bg-transparent hover:border-primary/50 transition-all hidden sm:flex text-xs sm:text-sm px-2 sm:px-3"
+              className="border-border/50 hover:bg-primary/10 bg-transparent hover:border-primary transition-all hover:scale-105 hidden sm:flex text-xs sm:text-sm px-2 sm:px-3"
               aria-label="Export chat"
             >
               <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
@@ -94,52 +70,25 @@ export function Header({ onResetPreferences }: HeaderProps) {
               onClick={() => setShowClearConfirm(true)}
               variant="outline"
               size="sm"
-              className="border-border/50 hover:bg-secondary/50 bg-transparent hover:border-primary/50 transition-all hidden sm:flex text-xs sm:text-sm px-2 sm:px-3"
+              className="border-border/50 hover:bg-red-500/10 bg-transparent hover:border-red-500/50 hover:text-red-400 transition-all hover:scale-105 hidden sm:flex text-xs sm:text-sm px-2 sm:px-3"
               aria-label="Clear chat"
             >
               <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
               <span className="hidden md:inline">Clear</span>
             </Button>
             <Button
-              onClick={() => setIsModalOpen(true)}
+              onClick={onOpenSettings}
               variant="outline"
               size="sm"
-              className="border-border/50 hover:bg-secondary/50 bg-transparent hover:border-primary/50 transition-all text-xs sm:text-sm px-2 sm:px-3"
-              aria-label="Change games"
+              className="border-border/50 hover:bg-primary/10 bg-transparent hover:border-primary transition-all hover:scale-105 text-xs sm:text-sm px-2 sm:px-3"
+              aria-label="Settings"
             >
               <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
-              <span className="hidden md:inline">Change Games</span>
+              <span className="hidden md:inline">Settings</span>
             </Button>
           </div>
         </div>
       </header>
-
-      {/* Modal Overlay */}
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-2 sm:p-4"
-          onClick={() => setIsModalOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="bg-card border border-border/50 rounded-lg p-4 sm:p-6 max-w-2xl w-full max-h-[85vh] sm:max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h2 className="text-base sm:text-lg font-bold">Change Games</h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-1 hover:bg-secondary rounded transition-colors"
-                aria-label="Close modal"
-              >
-                <X className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-            </div>
-
-            <GameSelector onGameSelection={handleSaveChanges} />
-          </div>
-        </div>
-      )}
 
       {/* Clear Chat Confirmation */}
       {showClearConfirm && (
