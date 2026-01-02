@@ -102,19 +102,36 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
     async (threadId: string) => {
       try {
         await apiDeleteThread(threadId)
-        setThreads((prev) => prev.filter((t) => t.id !== threadId))
+        
+        // Update threads state and determine next actions
+        let shouldClearActive = false
+        let nextThreadId: string | undefined
+        
+        setThreads((prev) => {
+          const remainingThreads = prev.filter((t) => t.id !== threadId)
+          
+          // If deleted thread was active, mark for clearing
+          if (activeThread?.id === threadId) {
+            shouldClearActive = true
+            // Determine if we should load another thread
+            if (remainingThreads.length > 0) {
+              nextThreadId = remainingThreads[0].id
+            }
+          }
+          
+          return remainingThreads
+        })
 
-        // If deleted thread was active, clear it
-        if (activeThread?.id === threadId) {
+        // Perform async operations outside the state updater
+        if (shouldClearActive) {
           setActiveThreadState(null)
           setMessages([])
           setLastLoadedThreadId(null)
           localStorage.removeItem(STORAGE_KEY)
 
           // Load another thread if available
-          const remainingThreads = threads.filter((t) => t.id !== threadId)
-          if (remainingThreads.length > 0) {
-            await setActiveThread(remainingThreads[0].id)
+          if (nextThreadId) {
+            await setActiveThread(nextThreadId)
           }
         }
       } catch (error) {
@@ -122,7 +139,7 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
         throw error
       }
     },
-    [activeThread, threads]
+    [activeThread]
   )
 
   const updateThreadTitle = useCallback(async (threadId: string, title: string) => {
