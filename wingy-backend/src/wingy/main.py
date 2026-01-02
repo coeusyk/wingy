@@ -169,7 +169,7 @@ async def main():
         print(f"\n❌ {e}")
         print("\nPlease check your .env file and ensure all required environment variables are set.")
         print("For OpenAI: Set OPENAI_API_KEY and LLM_MODEL")
-        print("For Ollama: Set LLM_PROVIDER=ollama, LLM_MODEL, and ensure Ollama is running")
+        print("For Ollama: Set LLM_PROVIDER=ollama and LLM_MODEL (optionally OLLAMA_BASE_URL if not using localhost:11434)")
         return
     
     # Create session manager
