@@ -138,7 +138,7 @@ export function GameSelector({ onGameSelection }: GameSelectorProps) {
       {/* Game Selection */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
         <div className="flex items-center gap-2 mb-3 sm:mb-4">
-          <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+          <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           <h2 className="text-lg sm:text-xl font-semibold text-foreground">Choose Your Games</h2>
         </div>
 

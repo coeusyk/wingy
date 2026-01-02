@@ -1,38 +1,38 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, Settings, Trash2, MessageSquare, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useUser } from "@/contexts/user-context"
 import { useThreads } from "@/contexts/thread-context"
+import { useGameContext } from "@/contexts/game-context"
 
 interface SidebarProps {
   onOpenSettings: () => void
 }
 
 export function Sidebar({ onOpenSettings }: SidebarProps) {
+  const router = useRouter()
   const { user } = useUser()
-  const { threads, activeThread, createThread, setActiveThread, deleteThread, isLoading } = useThreads()
+  const { selectedGames, preference } = useGameContext()
+  const { threads, activeThread, createThread, deleteThread, isLoading, clearActiveThread } = useThreads()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleNewChat = async () => {
+  const handleNewChat = () => {
     if (!user) return
-    try {
-      await createThread(user.id)
-    } catch (error) {
-      console.error("Error creating thread:", error)
-    }
+    // Clear active thread state to start fresh
+    clearActiveThread()
+    // Navigate to /chat without creating thread yet
+    // Thread will be created when user sends first message
+    router.push('/chat')
   }
 
-  const handleThreadClick = async (threadId: string) => {
+  const handleThreadClick = (threadId: string) => {
     if (threadId === activeThread?.id) return
-    try {
-      await setActiveThread(threadId)
-      setIsOpen(false) // Close mobile menu after selection
-    } catch (error) {
-      console.error("Error switching thread:", error)
-    }
+    router.push(`/chat/${threadId}`)
+    setIsOpen(false) // Close mobile menu after selection
   }
 
   const handleDeleteThread = async (threadId: string, e: React.MouseEvent) => {
@@ -87,9 +87,9 @@ export function Sidebar({ onOpenSettings }: SidebarProps) {
       </div>
 
       {/* Thread List */}
-      <div className="flex-1 overflow-y-auto p-1.5 sm:p-2">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4">
         {threads.length === 0 ? (
-          <div className="p-3 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">
+          <div className="text-center text-muted-foreground text-xs sm:text-sm">
             <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 opacity-50" />
             <p>No conversations yet</p>
             <p className="text-[10px] sm:text-xs mt-1">Click "New Chat" to start</p>
@@ -104,7 +104,7 @@ export function Sidebar({ onOpenSettings }: SidebarProps) {
                 <div
                   key={thread.id}
                   onClick={() => !isDeleting && handleThreadClick(thread.id)}
-                  className={`w-full p-2.5 sm:p-3 rounded-lg text-left transition-all group relative cursor-pointer ${
+                  className={`p-2.5 sm:p-3 rounded-lg text-left transition-all group relative cursor-pointer ${
                     isActive
                       ? "bg-primary/20 border-2 border-primary/50"
                       : "hover:bg-secondary/50 border-2 border-transparent"

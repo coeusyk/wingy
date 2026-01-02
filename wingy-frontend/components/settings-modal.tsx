@@ -59,6 +59,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isClosing, setIsClosing] = useState(false)
+  const [gamesLoaded, setGamesLoaded] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -69,20 +70,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         setSelectedPreferences(user.preferences.preferences as PreferenceType[] || [])
       }
 
-      // Load all games
-      const loadGames = async () => {
-        try {
-          const games = await fetchAllGames()
-          setAllGames(games)
-        } catch (error) {
-          console.error("Error loading games:", error)
-        } finally {
-          setIsLoading(false)
+      // Load all games only once (uses cache from api.ts)
+      if (!gamesLoaded) {
+        const loadGames = async () => {
+          try {
+            const games = await fetchAllGames()
+            setAllGames(games)
+            setGamesLoaded(true)
+          } catch (error) {
+            console.error("Error loading games:", error)
+          } finally {
+            setIsLoading(false)
+          }
         }
+        loadGames()
+      } else {
+        setIsLoading(false)
       }
-      loadGames()
     }
-  }, [isOpen, user])
+  }, [isOpen, user, gamesLoaded])
 
   const handleGameToggle = (gameId: string) => {
     setSelectedGames((prev) =>
@@ -210,7 +216,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   >
                     <div className="flex items-start justify-between mb-1.5 sm:mb-2">
                       <Icon
-                        className={`w-5 h-5 sm:w-6 sm:h-6 ${isSelected ? "text-primary" : "text-accent"}`}
+                        className={`w-5 h-5 sm:w-6 sm:h-6 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
                       />
                       <div
                         className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center ${

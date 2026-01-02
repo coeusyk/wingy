@@ -17,6 +17,8 @@ class CreateThreadRequest(BaseModel):
     """Request model for creating a thread."""
     user_id: str = Field(..., description="User identifier")
     title: Optional[str] = Field(None, description="Thread title")
+    game_ids: Optional[List[str]] = Field(None, description="List of game IDs for this thread")
+    preferences: Optional[List[str]] = Field(None, description="List of preferences for this thread")
 
 
 class ThreadResponse(BaseModel):
@@ -24,6 +26,8 @@ class ThreadResponse(BaseModel):
     id: str = Field(..., description="Thread identifier")
     user_id: str = Field(..., description="User identifier")
     title: str = Field(..., description="Thread title")
+    game_ids: List[str] = Field(default_factory=list, description="List of game IDs")
+    preferences: List[str] = Field(default_factory=list, description="List of preferences")
     created_at: str = Field(..., description="Creation timestamp")
     updated_at: str = Field(..., description="Last update timestamp")
 
@@ -61,7 +65,9 @@ async def create_thread(request: CreateThreadRequest) -> ThreadResponse:
         # Create thread
         thread = db.create_thread(
             user_id=request.user_id,
-            title=request.title
+            title=request.title,
+            game_ids=request.game_ids,
+            preferences=request.preferences
         )
         
         return ThreadResponse(**thread)

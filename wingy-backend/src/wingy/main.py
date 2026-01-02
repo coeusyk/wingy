@@ -159,10 +159,12 @@ async def main():
     try:
         config = load_config()
         logging.info("Configuration loaded successfully")
+        logging.info(f"Using Ollama at {config['ollama_base_url']} with model {config['llm_model']}")
     except ValueError as e:
         logging.error(f"Configuration error: {e}")
         print(f"\n❌ {e}")
-        print("\nPlease create a .env file with your OPENAI_API_KEY")
+        print("\nPlease ensure Ollama is running at http://localhost:11434")
+        print("Or set OLLAMA_BASE_URL and LLM_MODEL in your .env file")
         return
     
     # Create session manager

@@ -48,7 +48,7 @@ export function Header({ onResetPreferences, onOpenSettings }: HeaderProps) {
               </span>
             ))}
             {selectedGames.length > 3 && (
-              <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-accent/20 text-accent text-xs sm:text-sm font-medium border border-accent/30 whitespace-nowrap">
+              <span className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-primary/20 text-primary text-xs sm:text-sm font-medium border border-primary/30 whitespace-nowrap">
                 +{selectedGames.length - 3} more
               </span>
             )}
@@ -70,7 +70,7 @@ export function Header({ onResetPreferences, onOpenSettings }: HeaderProps) {
               onClick={() => setShowClearConfirm(true)}
               variant="outline"
               size="sm"
-              className="border-border/50 hover:bg-red-500/10 bg-transparent hover:border-red-500/50 hover:text-red-400 transition-all hover:scale-105 hidden sm:flex text-xs sm:text-sm px-2 sm:px-3"
+              className="border-border/50 hover:bg-destructive/10 bg-transparent hover:border-destructive/50 hover:text-destructive transition-all hover:scale-105 hidden sm:flex text-xs sm:text-sm px-2 sm:px-3"
               aria-label="Clear chat"
             >
               <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
@@ -107,7 +107,7 @@ export function Header({ onResetPreferences, onOpenSettings }: HeaderProps) {
               <Button onClick={() => setShowClearConfirm(false)} variant="outline" className="flex-1 border-border/50 text-xs sm:text-sm">
                 Cancel
               </Button>
-              <Button onClick={handleClearChat} className="flex-1 bg-red-600 hover:bg-red-700 text-xs sm:text-sm">
+              <Button onClick={handleClearChat} className="flex-1 bg-destructive hover:bg-destructive/90 text-xs sm:text-sm">
                 Clear
               </Button>
             </div>

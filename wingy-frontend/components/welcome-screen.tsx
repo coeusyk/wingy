@@ -50,7 +50,7 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-8">
               <Card className="bg-card/50 border-border/30 p-3 sm:p-4 hover:border-primary/50 transition-all duration-300 hover:bg-card/70">
                 <div className="flex flex-col items-center text-center">
-                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-accent mb-2" />
+                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-primary mb-2" />
                   <h3 className="font-semibold mb-1 text-sm">Expert Strategies</h3>
                   <p className="text-xs text-muted-foreground">Get competitive tips and advanced tactics</p>
                 </div>
@@ -58,7 +58,7 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
 
               <Card className="bg-card/50 border-border/30 p-3 sm:p-4 hover:border-primary/50 transition-all duration-300 hover:bg-card/70">
                 <div className="flex flex-col items-center text-center">
-                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-accent mb-2" />
+                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-primary mb-2" />
                   <h3 className="font-semibold mb-1 text-sm">Learn Faster</h3>
                   <p className="text-xs text-muted-foreground">Beginner-friendly guides and tutorials</p>
                 </div>
@@ -66,7 +66,7 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
 
               <Card className="bg-card/50 border-border/30 p-3 sm:p-4 hover:border-primary/50 transition-all duration-300 hover:bg-card/70">
                 <div className="flex flex-col items-center text-center">
-                  <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-accent mb-2" />
+                  <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-primary mb-2" />
                   <h3 className="font-semibold mb-1 text-sm">Any Game</h3>
                   <p className="text-xs text-muted-foreground">Support for thousands of games</p>
                 </div>

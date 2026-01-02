@@ -2,9 +2,20 @@
 
 ## ✅ What We've Built
 
-A complete full-stack AI gaming assistant with multi-agent orchestration, web search integration, and real-time chat interface.
+A complete full-stack AI gaming assistant with multi-agent orchestration, web search integration, multi-provider LLM support, and real-time chat interface.
 
 **Status**: 🎉 **MVP COMPLETE** - Backend API + Frontend UI fully functional!
+
+## 🆕 Recent Updates (December 2024)
+
+### LiteLLM Multi-Provider Integration (Issue #1)
+- ✅ Added LiteLLM support for flexible LLM provider selection
+- ✅ Support for OpenAI (GPT-4, GPT-3.5) and Ollama (Llama 3.1, Mistral, etc.)
+- ✅ Model factory pattern for seamless provider switching
+- ✅ Backward compatible with existing OpenAI configurations
+- ✅ All agents updated to use multi-provider model factory
+- ✅ Comprehensive documentation in `docs/LITELLM_INTEGRATION.md`
+- ✅ Updated `.env.example` with new configuration options
 
 ## 📁 Project Structure
 
@@ -46,7 +57,8 @@ wingy-backend/
 │   │
 │   ├── utils/                     # 🛠️ Utilities
 │   │   ├── __init__.py
-│   │   ├── config.py              # ✅ Configuration loading
+│   │   ├── config.py              # ✅ Configuration loading (LiteLLM support)
+│   │   ├── llm_model.py           # ✅ LLM model factory (multi-provider)
 │   │   └── logging.py             # ✅ Logging setup
 │   │
 │   ├── __init__.py
@@ -70,6 +82,7 @@ wingy-backend/
 │   ├── CHAT_IMPLEMENTATION.md     # ✅ Chat implementation summary
 │   ├── GAMES_API.md               # ✅ Games API documentation
 │   ├── GOOGLE_SEARCH_SETUP.md     # ✅ Google Search setup guide
+│   ├── LITELLM_INTEGRATION.md     # ✅ LiteLLM multi-provider guide
 │   └── WEB_SEARCH_IMPLEMENTATION.md # ✅ Web search docs
 │
 ├── run_api.py                     # ✅ FastAPI server runner
@@ -153,7 +166,26 @@ wingy-frontend/
 - Graceful error handling and fallbacks
 - Works with or without API credentials
 
-### 6. REST API (FastAPI) ✅
+### 6. LiteLLM Multi-Provider Support ✅
+- **Provider Support**:
+  - OpenAI (GPT-4, GPT-3.5, etc.)
+  - Ollama (Llama 3.1, Mistral, CodeLlama, etc.)
+  - Easy to add more providers
+- **Features**:
+  - Unified interface via LiteLLM
+  - Runtime provider switching
+  - Backward compatible with OpenAI
+  - Configuration-driven selection
+- **Benefits**:
+  - Cost optimization (free local Ollama)
+  - Development flexibility
+  - No vendor lock-in
+- **Implementation**:
+  - Model factory pattern (`utils/llm_model.py`)
+  - All agents updated to use factory
+  - Environment-based configuration
+
+### 7. REST API (FastAPI) ✅
 - **Chat Endpoints**:
   - `POST /chat/message` - Send message, get response
   - `POST /chat/message/stream` - Stream responses (SSE)
@@ -181,7 +213,7 @@ wingy-frontend/
   - Indie (5): Hades, Celeste, Hollow Knight, etc.
   - Sports (2): Rocket League, FIFA
 
-### 8. Frontend UI (Next.js + React) ✅
+### 9. Frontend UI (Next.js + React) ✅
 - **Onboarding Flow**:
   - Welcome screen with smooth animations
   - Game selection (multi-select, search, genre filter)
@@ -201,7 +233,7 @@ wingy-frontend/
   - Dark theme
   - Glassmorphism effects
 
-### 9. User Preferences System ✅
+### 10. User Preferences System ✅
 - **6 Preference Types**:
   - Competitive: Win-focused, optimization
   - Improvement: Practice routines, progression
@@ -215,8 +247,9 @@ wingy-frontend/
   - Routing priority influenced by preferences
   - Tone and depth adjusted accordingly
 
-### 10. Configuration & Utilities ✅
+### 11. Configuration & Utilities ✅
 - Environment-based configuration (.env)
+- Multi-provider LLM support (OpenAI, Ollama)
 - Structured logging
 - Error handling
 - Data models with Pydantic
@@ -632,5 +665,3 @@ To extend Wingy:
 **Status**: 🎉 **MVP COMPLETE** - Fully functional full-stack AI gaming assistant!
 
 **Built with**: OpenAI Agents SDK, FastAPI, Next.js, TypeScript, Tailwind CSS
-
-**Last Updated**: October 23, 2025

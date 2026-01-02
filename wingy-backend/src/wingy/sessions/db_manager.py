@@ -44,11 +44,25 @@ class SessionsDatabase:
                     id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
                     title TEXT NOT NULL,
+                    game_ids TEXT,
+                    preferences TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 )
             """)
+            
+            # Add game_ids and preferences columns if they don't exist (migration for existing databases)
+            cursor.execute("PRAGMA table_info(threads)")
+            existing_columns = [row[1] for row in cursor.fetchall()]
+
+            if "game_ids" not in existing_columns:
+                cursor.execute("ALTER TABLE threads ADD COLUMN game_ids TEXT")
+                logger.info("Added game_ids column to threads table")
+
+            if "preferences" not in existing_columns:
+                cursor.execute("ALTER TABLE threads ADD COLUMN preferences TEXT")
+                logger.info("Added preferences column to threads table")
             
             # Messages table
             cursor.execute("""
@@ -153,14 +167,18 @@ class SessionsDatabase:
         self,
         user_id: str,
         title: Optional[str] = None,
-        thread_id: Optional[str] = None
-    ) -> Dict[str, str]:
+        thread_id: Optional[str] = None,
+        game_ids: Optional[List[str]] = None,
+        preferences: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """Create a new chat thread.
         
         Args:
             user_id: User identifier
             title: Thread title (auto-generated if not provided)
             thread_id: Optional thread ID (will generate UUID if not provided)
+            game_ids: Optional list of game IDs for this thread
+            preferences: Optional list of preferences for this thread
             
         Returns:
             Dictionary with thread information
@@ -171,12 +189,16 @@ class SessionsDatabase:
         if not title:
             title = f"Chat - {datetime.utcnow().strftime('%b %d, %I:%M %p')}"
         
+        # Serialize game_ids and preferences to JSON
+        game_ids_json = json.dumps(game_ids) if game_ids else json.dumps([])
+        preferences_json = json.dumps(preferences) if preferences else json.dumps([])
+        
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
-                """INSERT INTO threads (id, user_id, title, created_at, updated_at) 
-                   VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)""",
-                (thread_id, user_id, title)
+                """INSERT INTO threads (id, user_id, title, game_ids, preferences, created_at, updated_at) 
+                   VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)""",
+                (thread_id, user_id, title, game_ids_json, preferences_json)
             )
             conn.commit()
         
@@ -185,11 +207,13 @@ class SessionsDatabase:
             "id": thread_id,
             "user_id": user_id,
             "title": title,
+            "game_ids": game_ids or [],
+            "preferences": preferences or [],
             "created_at": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat()
         }
     
-    def get_user_threads(self, user_id: str) -> List[Dict[str, str]]:
+    def get_user_threads(self, user_id: str) -> List[Dict[str, Any]]:
         """Get all threads for a user.
         
         Args:
@@ -202,15 +226,22 @@ class SessionsDatabase:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(
-                """SELECT id, user_id, title, created_at, updated_at 
+                """SELECT id, user_id, title, game_ids, preferences, created_at, updated_at 
                    FROM threads 
                    WHERE user_id = ? 
                    ORDER BY updated_at DESC""",
                 (user_id,)
             )
-            return [dict(row) for row in cursor.fetchall()]
+            threads = []
+            for row in cursor.fetchall():
+                thread = dict(row)
+                # Deserialize JSON fields
+                thread['game_ids'] = json.loads(thread['game_ids']) if thread.get('game_ids') else []
+                thread['preferences'] = json.loads(thread['preferences']) if thread.get('preferences') else []
+                threads.append(thread)
+            return threads
     
-    def get_thread(self, thread_id: str) -> Optional[Dict[str, str]]:
+    def get_thread(self, thread_id: str) -> Optional[Dict[str, Any]]:
         """Get thread by ID.
         
         Args:
@@ -223,11 +254,17 @@ class SessionsDatabase:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, user_id, title, created_at, updated_at FROM threads WHERE id = ?",
+                "SELECT id, user_id, title, game_ids, preferences, created_at, updated_at FROM threads WHERE id = ?",
                 (thread_id,)
             )
             row = cursor.fetchone()
-            return dict(row) if row else None
+            if row:
+                thread = dict(row)
+                # Deserialize JSON fields
+                thread['game_ids'] = json.loads(thread['game_ids']) if thread.get('game_ids') else []
+                thread['preferences'] = json.loads(thread['preferences']) if thread.get('preferences') else []
+                return thread
+            return None
     
     def update_thread_title(self, thread_id: str, title: str) -> bool:
         """Update thread title.
