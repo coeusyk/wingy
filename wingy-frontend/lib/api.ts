@@ -9,6 +9,10 @@ export interface ApiError {
   status: number
 }
 
+// Cache for games data to prevent redundant API calls
+let gamesCache: { data: any[]; timestamp: number } | null = null
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
 // Mock data for development/fallback
 const MOCK_ALL_GAMES = [
   { id: "league-of-legends", name: "League of Legends", category: "MOBA", abbr: "LoL" },
@@ -37,8 +41,15 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export async function fetchAllGames(): Promise<any[]> {
+  // Return cached data if still valid
+  if (gamesCache && Date.now() - gamesCache.timestamp < CACHE_DURATION) {
+    console.log("[v0] Using cached games data")
+    return gamesCache.data
+  }
+
   if (!API_BASE_URL) {
     console.log("[v0] Using mock all games data (no API configured)")
+    gamesCache = { data: MOCK_ALL_GAMES, timestamp: Date.now() }
     return MOCK_ALL_GAMES
   }
 
@@ -48,12 +59,16 @@ export async function fetchAllGames(): Promise<any[]> {
       headers: { "Content-Type": "application/json" },
     })
     const data = await handleResponse<{ games: any[]; count: number }>(response)
+    // Cache the successful response
+    gamesCache = { data: data.games, timestamp: Date.now() }
+    console.log("[v0] Fetched and cached games data")
     return data.games
   } catch (error) {
     console.warn(
       "[v0] Failed to fetch all games from API, using mock data:",
       error instanceof Error ? error.message : String(error),
     )
+    gamesCache = { data: MOCK_ALL_GAMES, timestamp: Date.now() }
     return MOCK_ALL_GAMES
   }
 }

@@ -39,4 +39,4 @@ def setup_logging(level: str = "INFO", log_file: Optional[str] = None) -> None:
     
     # Set third-party loggers to WARNING to reduce noise
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("openai").setLevel(logging.WARNING)
+    logging.getLogger("litellm").setLevel(logging.INFO)  # Show LiteLLM info for debugging

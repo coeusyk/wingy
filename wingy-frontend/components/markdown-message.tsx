@@ -33,18 +33,18 @@ export function MarkdownMessage({ content, className = '' }: MarkdownMessageProp
 
     // Paragraphs
     p: ({ node, ...props }) => (
-      <p className="text-gray-200 mb-3 leading-relaxed" {...props} />
+      <p className="text-gray-200 mb-3 leading-relaxed text-base sm:text-lg" {...props} />
     ),
 
     // Lists
     ul: ({ node, ...props }) => (
-      <ul className="text-gray-200 mb-3 space-y-1 list-disc list-inside" {...props} />
+      <ul className="text-gray-200 mb-3 space-y-1 list-disc list-inside text-base sm:text-lg" {...props} />
     ),
     ol: ({ node, ...props }) => (
-      <ol className="text-gray-200 mb-3 space-y-1 list-decimal list-inside" {...props} />
+      <ol className="text-gray-200 mb-3 space-y-1 list-decimal list-inside text-base sm:text-lg" {...props} />
     ),
     li: ({ node, ...props }) => (
-      <li className="text-gray-200 ml-4" {...props} />
+      <li className="text-gray-200 ml-4 text-base sm:text-lg" {...props} />
     ),
 
     // Code blocks
@@ -139,7 +139,7 @@ export function MarkdownMessage({ content, className = '' }: MarkdownMessageProp
   }
 
   return (
-    <div className={`prose prose-invert max-w-none text-sm md:text-base ${className}`}>
+    <div className={`prose prose-invert max-w-none text-base md:text-lg ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={components}

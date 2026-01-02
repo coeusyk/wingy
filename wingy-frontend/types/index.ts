@@ -32,6 +32,8 @@ export interface Thread {
   id: string
   user_id: string
   title: string
+  game_ids: string[]
+  preferences: string[]
   created_at: string
   updated_at: string
 }
@@ -73,10 +75,11 @@ export interface ThreadContextType {
   activeThread: Thread | null
   messages: ThreadMessage[]
   isLoading: boolean
-  createThread: (userId: string, title?: string) => Promise<Thread>
+  createThread: (userId: string, title?: string, gameIds?: string[], preferences?: string[]) => Promise<Thread>
   loadThreads: (userId: string) => Promise<void>
   setActiveThread: (threadId: string) => Promise<void>
+  clearActiveThread: () => void
   deleteThread: (threadId: string) => Promise<void>
   updateThreadTitle: (threadId: string, title: string) => Promise<void>
-  sendMessage: (content: string) => Promise<void>
+  sendMessage: (content: string, userId?: string, gameIds?: string[], preferences?: string[]) => Promise<Thread | void>
 }

@@ -20,11 +20,12 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
   const [activeThread, setActiveThreadState] = useState<Thread | null>(null)
   const [messages, setMessages] = useState<ThreadMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [lastLoadedThreadId, setLastLoadedThreadId] = useState<string | null>(null)
 
-  const createThread = useCallback(async (userId: string, title?: string): Promise<Thread> => {
+  const createThread = useCallback(async (userId: string, title?: string, gameIds?: string[], preferences?: string[]): Promise<Thread> => {
     try {
       setIsLoading(true)
-      const newThread = await apiCreateThread(userId, title)
+      const newThread = await apiCreateThread(userId, title, gameIds, preferences)
       setThreads((prev) => [newThread, ...prev])
       
       // Set as active thread and load its (empty) messages
@@ -46,26 +47,7 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true)
       const userThreads = await getUserThreads(userId)
       setThreads(userThreads)
-
-      // Auto-load last active thread or most recent
-      const lastActiveId = localStorage.getItem(STORAGE_KEY)
-      if (lastActiveId && userThreads.some((t) => t.id === lastActiveId)) {
-        // Use userThreads directly instead of state
-        const thread = userThreads.find((t) => t.id === lastActiveId)
-        if (thread) {
-          setActiveThreadState(thread)
-          localStorage.setItem(STORAGE_KEY, thread.id)
-          const threadMessages = await getThreadMessages(thread.id)
-          setMessages(threadMessages)
-        }
-      } else if (userThreads.length > 0) {
-        // Use userThreads directly instead of state
-        const thread = userThreads[0]
-        setActiveThreadState(thread)
-        localStorage.setItem(STORAGE_KEY, thread.id)
-        const threadMessages = await getThreadMessages(thread.id)
-        setMessages(threadMessages)
-      }
+      // Don't automatically set an active thread - let the route handle navigation
     } catch (error) {
       console.error("[ThreadProvider] Error loading threads:", error)
       throw error
@@ -77,6 +59,12 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
   const setActiveThread = useCallback(
     async (threadId: string) => {
       try {
+        // Skip if already loading messages for this thread
+        if (lastLoadedThreadId === threadId && messages.length > 0) {
+          console.log("[ThreadProvider] Messages already loaded for thread:", threadId)
+          return
+        }
+        
         setIsLoading(true)
         // Access threads from state via functional update
         setThreads((currentThreads) => {
@@ -87,7 +75,10 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
             
             // Load messages for this thread
             getThreadMessages(threadId)
-              .then(setMessages)
+              .then((msgs) => {
+                setMessages(msgs)
+                setLastLoadedThreadId(threadId)
+              })
               .catch((error) => {
                 console.error("[ThreadProvider] Error loading messages:", error)
               })
@@ -104,25 +95,43 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
         throw error
       }
     },
-    []
+    [lastLoadedThreadId, messages.length]
   )
 
   const deleteThread = useCallback(
     async (threadId: string) => {
       try {
         await apiDeleteThread(threadId)
-        setThreads((prev) => prev.filter((t) => t.id !== threadId))
+        
+        // Update threads state and determine next actions
+        let shouldClearActive = false
+        let nextThreadId: string | undefined
+        
+        setThreads((prev) => {
+          const remainingThreads = prev.filter((t) => t.id !== threadId)
+          
+          // If deleted thread was active, mark for clearing
+          if (activeThread?.id === threadId) {
+            shouldClearActive = true
+            // Determine if we should load another thread
+            if (remainingThreads.length > 0) {
+              nextThreadId = remainingThreads[0].id
+            }
+          }
+          
+          return remainingThreads
+        })
 
-        // If deleted thread was active, clear it
-        if (activeThread?.id === threadId) {
+        // Perform async operations outside the state updater
+        if (shouldClearActive) {
           setActiveThreadState(null)
           setMessages([])
+          setLastLoadedThreadId(null)
           localStorage.removeItem(STORAGE_KEY)
 
           // Load another thread if available
-          const remainingThreads = threads.filter((t) => t.id !== threadId)
-          if (remainingThreads.length > 0) {
-            await setActiveThread(remainingThreads[0].id)
+          if (nextThreadId) {
+            await setActiveThread(nextThreadId)
           }
         }
       } catch (error) {
@@ -130,7 +139,7 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
         throw error
       }
     },
-    [activeThread, threads]
+    [activeThread]
   )
 
   const updateThreadTitle = useCallback(async (threadId: string, title: string) => {
@@ -150,16 +159,29 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
   }, [activeThread])
 
   const sendMessage = useCallback(
-    async (content: string) => {
-      if (!activeThread) {
-        throw new Error("No active thread")
-      }
-
+    async (content: string, userId?: string, gameIds?: string[], preferences?: string[]) => {
       try {
+        let threadToUse = activeThread
+
+        // If no active thread, create one with first message as title
+        if (!threadToUse && userId) {
+          // Truncate message for title (max 50 chars, add ellipsis if longer)
+          const title = content.length > 50 ? content.substring(0, 50) + "..." : content
+          
+          threadToUse = await apiCreateThread(userId, title, gameIds, preferences)
+          setThreads((prev) => [threadToUse!, ...prev])
+          setActiveThreadState(threadToUse)
+          localStorage.setItem(STORAGE_KEY, threadToUse.id)
+        }
+
+        if (!threadToUse) {
+          throw new Error("No active thread and no userId provided to create one")
+        }
+
         // Optimistically add user message
         const userMessage: ThreadMessage = {
           id: `temp-${Date.now()}`,
-          thread_id: activeThread.id,
+          thread_id: threadToUse.id,
           role: "user",
           content,
           created_at: new Date().toISOString(),
@@ -169,14 +191,14 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
         // Send to API
         const response = await sendChatMessage({
           message: content,
-          session_id: activeThread.id,
-          thread_id: activeThread.id,
+          session_id: threadToUse.id,
+          thread_id: threadToUse.id,
         })
 
         // Add agent response
         const agentMessage: ThreadMessage = {
           id: `temp-${Date.now() + 1}`,
-          thread_id: activeThread.id,
+          thread_id: threadToUse.id,
           role: "assistant",
           content: response.message,
           created_at: new Date().toISOString(),
@@ -184,8 +206,11 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
         setMessages((prev) => [...prev, agentMessage])
 
         // Reload messages from backend to get proper IDs
-        const updatedMessages = await getThreadMessages(activeThread.id)
+        const updatedMessages = await getThreadMessages(threadToUse.id)
         setMessages(updatedMessages)
+        setLastLoadedThreadId(threadToUse.id)
+
+        return threadToUse
       } catch (error) {
         console.error("[ThreadProvider] Error sending message:", error)
         // Remove optimistic message on error
@@ -196,6 +221,13 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
     [activeThread]
   )
 
+  const clearActiveThread = useCallback(() => {
+    setActiveThreadState(null)
+    setMessages([])
+    setLastLoadedThreadId(null)
+    localStorage.removeItem(STORAGE_KEY)
+  }, [])
+
   const value: ThreadContextType = {
     threads,
     activeThread,
@@ -204,6 +236,7 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
     createThread,
     loadThreads,
     setActiveThread,
+    clearActiveThread,
     deleteThread,
     updateThreadTitle,
     sendMessage,

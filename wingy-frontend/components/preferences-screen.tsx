@@ -100,7 +100,7 @@ export function PreferencesScreen({
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <Icon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 transition-colors duration-300 ${isSelected ? "text-primary" : "text-accent"}`} />
+                      <Icon className={`w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 transition-colors duration-300 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
                       <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
                         isSelected ? "bg-primary border-primary" : "border-border/50"
                       }`}>

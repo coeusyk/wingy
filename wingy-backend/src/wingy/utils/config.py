@@ -18,9 +18,15 @@ def load_config() -> Dict[str, Any]:
         load_dotenv(env_path)
     
     config = {
-        # OpenAI Configuration
+        # OpenAI Configuration (Legacy - for backward compatibility)
         "openai_api_key": os.getenv("OPENAI_API_KEY"),
         "openai_model": os.getenv("OPENAI_MODEL"),
+        
+        # LLM Provider Configuration (New - LiteLLM support)
+        "llm_provider": os.getenv("LLM_PROVIDER", "openai"),  # openai, ollama
+        "llm_model": os.getenv("LLM_MODEL"),  # gpt-4, llama3.1:latest, etc.
+        "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+        
         "enable_tracing": os.getenv("ENABLE_TRACING", "true").lower() == "true",
         
         # Session Configuration
@@ -31,10 +37,20 @@ def load_config() -> Dict[str, Any]:
         "google_search_engine_id": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
     }
     
+    # Backward compatibility: if LLM_MODEL not set, use OPENAI_MODEL
+    if not config["llm_model"]:
+        config["llm_model"] = config["openai_model"]
+    
     # Validate required configs
-    if not config["openai_api_key"]:
+    if not config["openai_api_key"] and config["llm_provider"] == "openai":
         raise ValueError(
             "OPENAI_API_KEY not found in environment. "
+            "Please set it in .env file or environment variables."
+        )
+    
+    if not config["llm_model"]:
+        raise ValueError(
+            "LLM_MODEL (or OPENAI_MODEL for backward compatibility) not found in environment. "
             "Please set it in .env file or environment variables."
         )
     

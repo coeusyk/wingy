@@ -6,11 +6,16 @@ import type { Thread, ThreadMessage } from "@/types"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
-export async function createThread(userId: string, title?: string): Promise<Thread> {
+export async function createThread(userId: string, title?: string, gameIds?: string[], preferences?: string[]): Promise<Thread> {
   const response = await fetch(`${API_BASE_URL}/threads/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: userId, title }),
+    body: JSON.stringify({ 
+      user_id: userId, 
+      title,
+      game_ids: gameIds,
+      preferences
+    }),
   })
 
   if (!response.ok) {

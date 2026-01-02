@@ -159,10 +159,18 @@ async def main():
     try:
         config = load_config()
         logging.info("Configuration loaded successfully")
+        llm_provider = config.get("llm_provider", "unknown")
+        if llm_provider == "ollama":
+            logging.info(f"Using Ollama at {config['ollama_base_url']} with model {config['llm_model']}")
+        else:
+            logging.info(f"Using {llm_provider} with model {config['llm_model']}")
     except ValueError as e:
         logging.error(f"Configuration error: {e}")
         print(f"\n❌ {e}")
-        print("\nPlease create a .env file with your OPENAI_API_KEY")
+        print("\nPlease check your .env file and ensure all required environment variables are set.")
+        print("For OpenAI: Set OPENAI_API_KEY and LLM_MODEL")
+        print("For Ollama: Set LLM_PROVIDER=ollama and LLM_MODEL")
+        print("            (optionally OLLAMA_BASE_URL if not using localhost:11434)")
         return
     
     # Create session manager
