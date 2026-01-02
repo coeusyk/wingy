@@ -369,7 +369,7 @@ export function ChatInterface() {
             <Button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground h-12.75 w-12 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-[51px] w-12 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
               aria-label="Send message"
             >
               <Send className="w-5 h-5" />
