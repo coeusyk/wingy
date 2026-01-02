@@ -159,7 +159,11 @@ async def main():
     try:
         config = load_config()
         logging.info("Configuration loaded successfully")
-        logging.info(f"Using Ollama at {config['ollama_base_url']} with model {config['llm_model']}")
+        llm_provider = config.get("llm_provider", "unknown")
+        if llm_provider == "ollama":
+            logging.info(f"Using Ollama at {config['ollama_base_url']} with model {config['llm_model']}")
+        else:
+            logging.info(f"Using {llm_provider} with model {config['llm_model']}")
     except ValueError as e:
         logging.error(f"Configuration error: {e}")
         print(f"\n❌ {e}")
