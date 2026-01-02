@@ -167,8 +167,9 @@ async def main():
     except ValueError as e:
         logging.error(f"Configuration error: {e}")
         print(f"\n❌ {e}")
-        print("\nPlease ensure Ollama is running at http://localhost:11434")
-        print("Or set OLLAMA_BASE_URL and LLM_MODEL in your .env file")
+        print("\nPlease check your .env file and ensure all required environment variables are set.")
+        print("For OpenAI: Set OPENAI_API_KEY and LLM_MODEL")
+        print("For Ollama: Set LLM_PROVIDER=ollama, LLM_MODEL, and ensure Ollama is running")
         return
     
     # Create session manager
