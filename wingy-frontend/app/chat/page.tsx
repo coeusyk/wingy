@@ -15,7 +15,7 @@ import type { Game, PreferenceType } from "@/types"
 export default function ChatPage() {
   const router = useRouter()
   const { user, isLoading: userLoading, isOnboarded, logout } = useUser()
-  const { loadThreads, threads, activeThread, isLoading: threadsLoading, clearActiveThread } = useThreads()
+  const { loadThreads, clearActiveThread } = useThreads()
   const { setSelectedGames, setPreference, setSessionId, setCurrentStep } = useGameContext()
   const [mounted, setMounted] = useState(false)
   const [threadsLoaded, setThreadsLoaded] = useState(false)
