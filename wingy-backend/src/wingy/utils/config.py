@@ -54,12 +54,6 @@ def load_config() -> Dict[str, Any]:
             "Please set it in .env file or environment variables."
         )
     
-    if config["llm_provider"] == "ollama" and not config["ollama_base_url"]:
-        raise ValueError(
-            "OLLAMA_BASE_URL must be set when using ollama provider. "
-            "Example: http://localhost:11434"
-        )
-    
     # Log warning if Google Search is not configured (not required)
     if not config["google_api_key"] or not config["google_search_engine_id"]:
         import logging
