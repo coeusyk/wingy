@@ -104,7 +104,7 @@ export function ChatInterface() {
     }
 
     fetchSuggestedQuestions()
-  }, [selectedGames, isEmptyChat, lastFetchedGameIds, isLoading, threadLoading, messages.length])
+  }, [selectedGames, isEmptyChat, isLoading, threadLoading, messages.length])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
