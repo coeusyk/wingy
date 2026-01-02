@@ -103,25 +103,37 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
       try {
         await apiDeleteThread(threadId)
         
-        // Update threads state and get the filtered result
+        // Update threads state
+        let shouldLoadNextThread = false
+        let nextThreadId: string | undefined
+        
         setThreads((prev) => {
           const remainingThreads = prev.filter((t) => t.id !== threadId)
           
-          // If deleted thread was active, clear it and load another if available
+          // If deleted thread was active, mark for clearing
           if (activeThread?.id === threadId) {
-            setActiveThreadState(null)
-            setMessages([])
-            setLastLoadedThreadId(null)
-            localStorage.removeItem(STORAGE_KEY)
-
-            // Load another thread if available
+            // Determine if we should load another thread
             if (remainingThreads.length > 0) {
-              setActiveThread(remainingThreads[0].id)
+              shouldLoadNextThread = true
+              nextThreadId = remainingThreads[0].id
             }
           }
           
           return remainingThreads
         })
+
+        // Perform async operations outside the state updater
+        if (activeThread?.id === threadId) {
+          setActiveThreadState(null)
+          setMessages([])
+          setLastLoadedThreadId(null)
+          localStorage.removeItem(STORAGE_KEY)
+
+          // Load another thread if available
+          if (shouldLoadNextThread && nextThreadId) {
+            await setActiveThread(nextThreadId)
+          }
+        }
       } catch (error) {
         console.error("[ThreadProvider] Error deleting thread:", error)
         throw error
