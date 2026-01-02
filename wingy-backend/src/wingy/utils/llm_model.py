@@ -40,8 +40,8 @@ def get_llm_model() -> Any:
         from agents.extensions.models.litellm_model import LitellmModel
     except ImportError:
         raise ImportError(
-            "LiteLLM support requires 'openai-agents[litellm]' package. "
-            "Install it with: pip install 'openai-agents[litellm]'"
+            "LiteLLM support requires the 'litellm' package. "
+            "Install it with: pip install litellm"
         )
     
     # Configure provider-specific settings
