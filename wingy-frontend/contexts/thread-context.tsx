@@ -102,7 +102,13 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
     async (threadId: string) => {
       try {
         await apiDeleteThread(threadId)
-        setThreads((prev) => prev.filter((t) => t.id !== threadId))
+        
+        // Use functional update to get remaining threads
+        let remainingThreads: Thread[] = []
+        setThreads((prev) => {
+          remainingThreads = prev.filter((t) => t.id !== threadId)
+          return remainingThreads
+        })
 
         // If deleted thread was active, clear it
         if (activeThread?.id === threadId) {
@@ -112,7 +118,6 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem(STORAGE_KEY)
 
           // Load another thread if available
-          const remainingThreads = threads.filter((t) => t.id !== threadId)
           if (remainingThreads.length > 0) {
             await setActiveThread(remainingThreads[0].id)
           }
@@ -122,7 +127,7 @@ export function ThreadProvider({ children }: { children: React.ReactNode }) {
         throw error
       }
     },
-    [activeThread, threads]
+    [activeThread, setActiveThread]
   )
 
   const updateThreadTitle = useCallback(async (threadId: string, title: string) => {
